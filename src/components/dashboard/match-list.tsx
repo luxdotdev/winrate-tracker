@@ -14,10 +14,12 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { heroImageUrl, mapImageUrl } from "@/lib/utils";
-import { format } from "date-fns";
-import { Trash2, Users } from "lucide-react";
+import { format, subDays } from "date-fns";
+import { ChevronLeft, ChevronRight, Trash2, Users } from "lucide-react";
 import Image from "next/image";
-import { useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
+
+const PAGE_SIZE = 10;
 
 type MatchHeroData = {
   id: string;
@@ -102,18 +104,75 @@ function DeleteMatchDialog({ matchId }: { matchId: string }) {
 }
 
 export function MatchList({ matches }: { matches: MatchData[] }) {
-  if (matches.length === 0) return null;
+  const [page, setPage] = useState(1);
+
+  const recentMatches = useMemo(() => {
+    const cutoff = subDays(new Date(), 7);
+    return matches.filter((m) => new Date(m.playedAt) >= cutoff);
+  }, [matches]);
+
+  const totalPages = Math.max(1, Math.ceil(recentMatches.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+
+  const pageMatches = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return recentMatches.slice(start, start + PAGE_SIZE);
+  }, [recentMatches, safePage]);
+
+  if (recentMatches.length === 0) return null;
+
+  const start = (safePage - 1) * PAGE_SIZE + 1;
+  const end = Math.min(safePage * PAGE_SIZE, recentMatches.length);
 
   return (
     <div className="space-y-3">
-      <h2 className="text-lg font-semibold tracking-tight text-balance">
-        Recent Matches
-      </h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold tracking-tight text-balance">
+          Recent Matches
+          <span className="text-muted-foreground ml-2 text-sm font-normal">
+            (last 7 days)
+          </span>
+        </h2>
+        {totalPages > 1 && (
+          <span className="text-muted-foreground text-xs">
+            {start}–{end} of {recentMatches.length}
+          </span>
+        )}
+      </div>
+
       <div className="space-y-2">
-        {matches.map((match) => (
+        {pageMatches.map((match) => (
           <MatchCard key={match.id} match={match} />
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage === 1}
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="size-4" aria-hidden="true" />
+            Previous
+          </Button>
+          <span className="text-muted-foreground text-sm">
+            Page {safePage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={safePage === totalPages}
+            aria-label="Next page"
+          >
+            Next
+            <ChevronRight className="size-4" aria-hidden="true" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
