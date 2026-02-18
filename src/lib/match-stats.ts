@@ -528,12 +528,17 @@ function getActivityHeatmapData(
 
 // --- Streak Data ---
 
+type RecentResult = {
+  matchId: string;
+  result: "win" | "loss" | "draw";
+};
+
 type StreakData = {
   currentStreak: number;
   currentStreakType: "win" | "loss" | "none";
   longestWinStreak: number;
   longestLossStreak: number;
-  recentResults: ("win" | "loss" | "draw")[];
+  recentResults: RecentResult[];
 };
 
 function getStreakData(matches: MatchData[]): StreakData {
@@ -541,9 +546,9 @@ function getStreakData(matches: MatchData[]): StreakData {
     (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()
   );
 
-  const recentResults = sorted
+  const recentResults: RecentResult[] = sorted
     .slice(0, 20)
-    .map((m) => m.result as "win" | "loss" | "draw");
+    .map((m) => ({ matchId: m.id, result: m.result as "win" | "loss" | "draw" }));
 
   let currentStreak = 0;
   let currentStreakType: "win" | "loss" | "none" = "none";
@@ -668,6 +673,7 @@ export type {
   SummaryStats,
   RollingWinrateResult,
   ActivityHeatmapResult,
+  RecentResult,
   StreakData,
   RecentFormData,
 };
