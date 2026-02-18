@@ -1,0 +1,136 @@
+"use client";
+
+import { GameModeDistributionChart } from "@/components/dashboard/charts/game-mode-distribution-chart";
+import { GameModeWinrateChart } from "@/components/dashboard/charts/game-mode-winrate-chart";
+import { HeroWinrateChart } from "@/components/dashboard/charts/hero-winrate-chart";
+import { MapWinLossChart } from "@/components/dashboard/charts/map-win-loss-chart";
+import { MostPlayedHeroesChart } from "@/components/dashboard/charts/most-played-heroes-chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type {
+  GameModeDistResult,
+  GameModeWinrateResult,
+  HeroWinrateResult,
+  MapWinLossResult,
+  MatchData,
+  MostPlayedHeroResult,
+} from "@/lib/match-stats";
+import {
+  Clock,
+  Crosshair,
+  LayoutGrid,
+  Map,
+  Shield,
+  Users,
+} from "lucide-react";
+
+type DashboardTabsProps = {
+  mapWinLoss: MapWinLossResult;
+  gameModeDistribution: GameModeDistResult;
+  gameModeWinrates: GameModeWinrateResult;
+  mostPlayedHeroes: MostPlayedHeroResult;
+  heroWinrates: HeroWinrateResult;
+  matches: MatchData[];
+};
+
+function PlaceholderTab({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center gap-2 py-16 text-center">
+      <p className="text-muted-foreground text-sm font-medium">{title}</p>
+      <p className="text-muted-foreground/70 max-w-sm text-xs text-pretty">
+        {description}
+      </p>
+    </div>
+  );
+}
+
+export function DashboardTabs({
+  mapWinLoss,
+  gameModeDistribution,
+  gameModeWinrates,
+  mostPlayedHeroes,
+  heroWinrates,
+  matches,
+}: DashboardTabsProps) {
+  return (
+    <Tabs defaultValue="overview">
+      <TabsList className="w-full" variant="line">
+        <TabsTrigger value="overview">
+          <LayoutGrid className="size-4" aria-hidden="true" />
+          Overview
+        </TabsTrigger>
+        <TabsTrigger value="heroes">
+          <Crosshair className="size-4" aria-hidden="true" />
+          Heroes
+        </TabsTrigger>
+        <TabsTrigger value="maps" disabled>
+          <Map className="size-4" aria-hidden="true" />
+          Maps
+        </TabsTrigger>
+        <TabsTrigger value="time" disabled>
+          <Clock className="size-4" aria-hidden="true" />
+          Time
+        </TabsTrigger>
+        <TabsTrigger value="groups" disabled>
+          <Users className="size-4" aria-hidden="true" />
+          Groups
+        </TabsTrigger>
+        <TabsTrigger value="roles" disabled>
+          <Shield className="size-4" aria-hidden="true" />
+          Roles
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="overview" className="space-y-4 pt-4">
+        <MapWinLossChart result={mapWinLoss} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <GameModeDistributionChart result={gameModeDistribution} />
+          <GameModeWinrateChart result={gameModeWinrates} />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="heroes" className="space-y-4 pt-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <MostPlayedHeroesChart
+            result={mostPlayedHeroes}
+            matches={matches}
+          />
+          <HeroWinrateChart result={heroWinrates} />
+        </div>
+      </TabsContent>
+
+      <TabsContent value="maps">
+        <PlaceholderTab
+          title="Map Analytics coming soon"
+          description="Deep dives into individual map performance, map-specific hero picks, and mode breakdowns."
+        />
+      </TabsContent>
+
+      <TabsContent value="time">
+        <PlaceholderTab
+          title="Time-Based Analytics coming soon"
+          description="Winrate trends over time, session analysis, and day-of-week performance patterns."
+        />
+      </TabsContent>
+
+      <TabsContent value="groups">
+        <PlaceholderTab
+          title="Group Size Analysis coming soon"
+          description="Compare your performance solo vs. grouped, and find your optimal group size."
+        />
+      </TabsContent>
+
+      <TabsContent value="roles">
+        <PlaceholderTab
+          title="Role Performance coming soon"
+          description="Tank, Damage, and Support breakdowns with role-specific winrates and hero pools."
+        />
+      </TabsContent>
+    </Tabs>
+  );
+}
