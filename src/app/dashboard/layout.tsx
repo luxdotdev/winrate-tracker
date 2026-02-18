@@ -1,4 +1,5 @@
 import { UserMenu } from "@/components/dashboard/user-menu";
+import { ModeToggle } from "@/components/mode-toggle";
 import { auth } from "@/lib/auth";
 import { BarChart3 } from "lucide-react";
 import { headers } from "next/headers";
@@ -33,7 +34,10 @@ export default async function DashboardLayout({
               <span className="text-primary">winrate</span>
             </span>
           </Link>
-          <UserMenu user={session.user} />
+          <div className="flex items-center gap-2">
+            <ModeToggle />
+            <UserMenu user={session.user} />
+          </div>
         </div>
       </header>
 
