@@ -381,6 +381,266 @@ function getSummaryStats(matches: MatchData[]): SummaryStats {
   };
 }
 
+// --- Rolling Winrate ---
+
+type RollingWinrateEntry = {
+  gameIndex: number;
+  date: string;
+  rollingWinrate: number;
+  result: string;
+};
+
+type RollingWinrateInsight = {
+  trend: "improving" | "declining" | "stable";
+  peakWinrate: number;
+  currentWinrate: number;
+  window: number;
+};
+
+type RollingWinrateResult = {
+  data: RollingWinrateEntry[];
+  insight: RollingWinrateInsight;
+};
+
+const ROLLING_WINDOW = 10;
+const TREND_THRESHOLD = 5;
+
+function getRollingWinrateData(
+  matches: MatchData[],
+  window = ROLLING_WINDOW
+): RollingWinrateResult {
+  const sorted = [...matches].sort(
+    (a, b) => new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime()
+  );
+
+  const data: RollingWinrateEntry[] = sorted.map((match, i) => {
+    const slice = sorted.slice(Math.max(0, i - window + 1), i + 1);
+    const wins = slice.filter((m) => m.result === "win").length;
+    const rollingWinrate = Math.round((wins / slice.length) * 100);
+    return {
+      gameIndex: i + 1,
+      date: new Date(match.playedAt).toLocaleDateString(),
+      rollingWinrate,
+      result: match.result,
+    };
+  });
+
+  const peakWinrate = data.reduce(
+    (max, d) => Math.max(max, d.rollingWinrate),
+    0
+  );
+  const currentWinrate = data.at(-1)?.rollingWinrate ?? 0;
+
+  let trend: "improving" | "declining" | "stable" = "stable";
+  if (data.length >= window * 2) {
+    const midpoint = Math.floor(data.length / 2);
+    const firstHalf = data.slice(0, midpoint);
+    const secondHalf = data.slice(midpoint);
+    const firstAvg =
+      firstHalf.reduce((s, d) => s + d.rollingWinrate, 0) / firstHalf.length;
+    const secondAvg =
+      secondHalf.reduce((s, d) => s + d.rollingWinrate, 0) / secondHalf.length;
+    if (secondAvg - firstAvg >= TREND_THRESHOLD) trend = "improving";
+    else if (firstAvg - secondAvg >= TREND_THRESHOLD) trend = "declining";
+  }
+
+  return { data, insight: { trend, peakWinrate, currentWinrate, window } };
+}
+
+// --- Activity Heatmap ---
+
+type HeatmapEntry = {
+  date: string;
+  count: number;
+};
+
+type ActivityHeatmapInsight = {
+  peakDayOfWeek: string;
+  avgGamesPerActiveDay: number;
+  totalActiveDays: number;
+};
+
+type ActivityHeatmapResult = {
+  data: HeatmapEntry[];
+  maxCount: number;
+  insight: ActivityHeatmapInsight;
+};
+
+const DAY_NAMES = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+
+function getActivityHeatmapData(
+  matches: MatchData[],
+  weeks = 16
+): ActivityHeatmapResult {
+  const countsByDate = new Map<string, number>();
+  for (const match of matches) {
+    const d = new Date(match.playedAt);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    countsByDate.set(key, (countsByDate.get(key) ?? 0) + 1);
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const endSunday = new Date(today);
+  endSunday.setDate(today.getDate() + (6 - today.getDay()));
+
+  const startDate = new Date(endSunday);
+  startDate.setDate(endSunday.getDate() - weeks * 7 + 1);
+
+  const data: HeatmapEntry[] = [];
+  const cursor = new Date(startDate);
+  while (cursor <= endSunday) {
+    const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`;
+    data.push({ date: key, count: countsByDate.get(key) ?? 0 });
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  const maxCount = data.reduce((max, d) => Math.max(max, d.count), 0);
+
+  const dayTotals = new Array(7).fill(0);
+  for (const match of matches) {
+    dayTotals[new Date(match.playedAt).getDay()]++;
+  }
+  const peakDayIndex = dayTotals.indexOf(
+    dayTotals.reduce((max: number, v: number) => Math.max(max, v), 0)
+  );
+  const peakDayOfWeek = DAY_NAMES[peakDayIndex] ?? "Unknown";
+
+  const activeDays = data.filter((d) => d.count > 0);
+  const totalActiveDays = activeDays.length;
+  const avgGamesPerActiveDay =
+    totalActiveDays > 0
+      ? Math.round(
+          (activeDays.reduce((s, d) => s + d.count, 0) / totalActiveDays) * 10
+        ) / 10
+      : 0;
+
+  return { data, maxCount, insight: { peakDayOfWeek, avgGamesPerActiveDay, totalActiveDays } };
+}
+
+// --- Streak Data ---
+
+type StreakData = {
+  currentStreak: number;
+  currentStreakType: "win" | "loss" | "none";
+  longestWinStreak: number;
+  longestLossStreak: number;
+  recentResults: ("win" | "loss" | "draw")[];
+};
+
+function getStreakData(matches: MatchData[]): StreakData {
+  const sorted = [...matches].sort(
+    (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()
+  );
+
+  const recentResults = sorted
+    .slice(0, 20)
+    .map((m) => m.result as "win" | "loss" | "draw");
+
+  let currentStreak = 0;
+  let currentStreakType: "win" | "loss" | "none" = "none";
+  if (sorted.length > 0) {
+    const first = sorted[0].result;
+    if (first === "win" || first === "loss") {
+      currentStreakType = first;
+      for (const match of sorted) {
+        if (match.result === first) currentStreak++;
+        else break;
+      }
+    }
+  }
+
+  const chronological = [...sorted].reverse();
+  let longestWinStreak = 0;
+  let longestLossStreak = 0;
+  let runWin = 0;
+  let runLoss = 0;
+  for (const match of chronological) {
+    if (match.result === "win") {
+      runWin++;
+      runLoss = 0;
+      longestWinStreak = Math.max(longestWinStreak, runWin);
+    } else if (match.result === "loss") {
+      runLoss++;
+      runWin = 0;
+      longestLossStreak = Math.max(longestLossStreak, runLoss);
+    } else {
+      runWin = 0;
+      runLoss = 0;
+    }
+  }
+
+  return {
+    currentStreak,
+    currentStreakType,
+    longestWinStreak,
+    longestLossStreak,
+    recentResults,
+  };
+}
+
+// --- Recent Form ---
+
+type FormStats = {
+  winrate: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  total: number;
+};
+
+type RecentFormData = {
+  recent: FormStats;
+  overall: FormStats;
+  delta: number;
+  trend: "improving" | "declining" | "stable";
+};
+
+const RECENT_FORM_WINDOW = 20;
+const RECENT_FORM_THRESHOLD = 5;
+
+function computeFormStats(matches: MatchData[]): FormStats {
+  const wins = matches.filter((m) => m.result === "win").length;
+  const losses = matches.filter((m) => m.result === "loss").length;
+  const draws = matches.filter((m) => m.result === "draw").length;
+  const total = matches.length;
+  return {
+    wins,
+    losses,
+    draws,
+    total,
+    winrate: total > 0 ? Math.round((wins / total) * 100) : 0,
+  };
+}
+
+function getRecentFormData(
+  matches: MatchData[],
+  window = RECENT_FORM_WINDOW
+): RecentFormData {
+  const sorted = [...matches].sort(
+    (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()
+  );
+
+  const recentMatches = sorted.slice(0, window);
+  const recent = computeFormStats(recentMatches);
+  const overall = computeFormStats(matches);
+  const delta = recent.winrate - overall.winrate;
+
+  let trend: "improving" | "declining" | "stable" = "stable";
+  if (delta >= RECENT_FORM_THRESHOLD) trend = "improving";
+  else if (delta <= -RECENT_FORM_THRESHOLD) trend = "declining";
+
+  return { recent, overall, delta, trend };
+}
+
 export {
   filterMatchesByRole,
   getMapWinLossData,
@@ -389,6 +649,10 @@ export {
   getMostPlayedHeroes,
   getHeroWinrates,
   getSummaryStats,
+  getRollingWinrateData,
+  getActivityHeatmapData,
+  getStreakData,
+  getRecentFormData,
   HERO_WINRATE_MIN_MATCHES,
 };
 
@@ -402,4 +666,8 @@ export type {
   MostPlayedHeroResult,
   HeroWinrateResult,
   SummaryStats,
+  RollingWinrateResult,
+  ActivityHeatmapResult,
+  StreakData,
+  RecentFormData,
 };
