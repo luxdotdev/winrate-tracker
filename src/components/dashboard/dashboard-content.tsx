@@ -19,13 +19,19 @@ import {
   getGameModeDistribution,
   getGameModeWinrates,
   getGroupSizeWinrates,
+  getHeroMapSynergy,
   getHeroPoolDiversity,
   getHeroSwapStats,
   getHeroWinrates,
+  getMapDetailedStats,
+  getMapFamiliarityData,
+  getMapLearningCurve,
+  getMapTimelineData,
   getMapWinLossData,
   getMostPlayedHeroes,
   getOneTrickStats,
   getRecentFormData,
+  getRepeatMapData,
   getRollingWinrateData,
   getRoleStats,
   getStreakData,
@@ -111,6 +117,30 @@ export function DashboardContent({ matches }: DashboardContentProps) {
     () => getHeroSwapStats(filteredMatches),
     [filteredMatches]
   );
+  const mapDetailedStats = useMemo(
+    () => getMapDetailedStats(filteredMatches),
+    [filteredMatches]
+  );
+  const heroMapSynergy = useMemo(
+    () => getHeroMapSynergy(filteredMatches),
+    [filteredMatches]
+  );
+  const mapLearningCurve = useMemo(
+    () => getMapLearningCurve(filteredMatches),
+    [filteredMatches]
+  );
+  const mapFamiliarity = useMemo(
+    () => getMapFamiliarityData(filteredMatches),
+    [filteredMatches]
+  );
+  const repeatMapData = useMemo(
+    () => getRepeatMapData(filteredMatches),
+    [filteredMatches]
+  );
+  const mapTimeline = useMemo(
+    () => getMapTimelineData(filteredMatches),
+    [filteredMatches]
+  );
 
   return (
     <div className="space-y-6">
@@ -164,6 +194,12 @@ export function DashboardContent({ matches }: DashboardContentProps) {
         oneTrick={oneTrick}
         heroPoolDiversity={heroPoolDiversity}
         heroSwapStats={heroSwapStats}
+        mapDetailedStats={mapDetailedStats}
+        heroMapSynergy={heroMapSynergy}
+        mapLearningCurve={mapLearningCurve}
+        mapFamiliarity={mapFamiliarity}
+        repeatMapData={repeatMapData}
+        mapTimeline={mapTimeline}
       />
 
       <MatchList matches={filteredMatches} />
