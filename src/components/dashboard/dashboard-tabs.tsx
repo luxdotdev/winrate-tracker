@@ -109,30 +109,48 @@ export function DashboardTabs({
 }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview">
-      <TabsList className="w-full" variant="line">
-        <TabsTrigger value="overview">
+      <TabsList className="h-auto w-full" variant="line">
+        <TabsTrigger
+          value="overview"
+          className="h-auto flex-col gap-0.5 py-2 sm:flex-row sm:gap-1.5 sm:py-1 sm:h-[calc(100%-1px)]"
+        >
           <LayoutGrid className="size-4" aria-hidden="true" />
-          Overview
+          <span className="text-[10px] sm:text-sm">Overview</span>
         </TabsTrigger>
-        <TabsTrigger value="heroes">
+        <TabsTrigger
+          value="heroes"
+          className="h-auto flex-col gap-0.5 py-2 sm:flex-row sm:gap-1.5 sm:py-1 sm:h-[calc(100%-1px)]"
+        >
           <Crosshair className="size-4" aria-hidden="true" />
-          Heroes
+          <span className="text-[10px] sm:text-sm">Heroes</span>
         </TabsTrigger>
-        <TabsTrigger value="maps">
+        <TabsTrigger
+          value="maps"
+          className="h-auto flex-col gap-0.5 py-2 sm:flex-row sm:gap-1.5 sm:py-1 sm:h-[calc(100%-1px)]"
+        >
           <Map className="size-4" aria-hidden="true" />
-          Maps
+          <span className="text-[10px] sm:text-sm">Maps</span>
         </TabsTrigger>
-        <TabsTrigger value="time">
+        <TabsTrigger
+          value="time"
+          className="h-auto flex-col gap-0.5 py-2 sm:flex-row sm:gap-1.5 sm:py-1 sm:h-[calc(100%-1px)]"
+        >
           <Clock className="size-4" aria-hidden="true" />
-          Time
+          <span className="text-[10px] sm:text-sm">Time</span>
         </TabsTrigger>
-        <TabsTrigger value="groups">
+        <TabsTrigger
+          value="groups"
+          className="h-auto flex-col gap-0.5 py-2 sm:flex-row sm:gap-1.5 sm:py-1 sm:h-[calc(100%-1px)]"
+        >
           <Users className="size-4" aria-hidden="true" />
-          Groups
+          <span className="text-[10px] sm:text-sm">Groups</span>
         </TabsTrigger>
-        <TabsTrigger value="roles">
+        <TabsTrigger
+          value="roles"
+          className="h-auto flex-col gap-0.5 py-2 sm:flex-row sm:gap-1.5 sm:py-1 sm:h-[calc(100%-1px)]"
+        >
           <Shield className="size-4" aria-hidden="true" />
-          Roles
+          <span className="text-[10px] sm:text-sm">Roles</span>
         </TabsTrigger>
       </TabsList>
 
