@@ -1,5 +1,5 @@
 import type { HeroRole } from "@/data/heroes";
-import type { MapType } from "@/data/maps";
+import { MAPS, MAP_NAMES, type MapType } from "@/data/maps";
 
 type MatchHeroData = {
   id: string;
@@ -1103,6 +1103,647 @@ function getHeroSwapStats(matches: MatchData[]): HeroSwapResult {
   };
 }
 
+// --- Map Detailed Stats ---
+
+function getConfidenceStars(total: number): 1 | 2 | 3 | 4 | 5 {
+  if (total >= 50) return 5;
+  if (total >= 35) return 4;
+  if (total >= 20) return 3;
+  if (total >= 10) return 2;
+  return 1;
+}
+
+function assignMapTier(
+  winrate: number,
+  total: number
+): "S" | "A" | "B" | "C" | "D" {
+  if (total < 3) return "C";
+  if (total < 5) {
+    if (winrate >= 65) return "A";
+    if (winrate >= 45) return "B";
+    return "C";
+  }
+  if (winrate >= 65) return "S";
+  if (winrate >= 55) return "A";
+  if (winrate >= 45) return "B";
+  if (winrate >= 35) return "C";
+  return "D";
+}
+
+function computeMapVolatility(
+  wins: number,
+  losses: number,
+  draws: number
+): number {
+  const total = wins + losses + draws;
+  if (total < 2) return 0;
+  const mean = (wins + 0.5 * draws) / total;
+  const variance =
+    (wins * (1 - mean) ** 2 +
+      losses * (0 - mean) ** 2 +
+      draws * (0.5 - mean) ** 2) /
+    total;
+  return Math.round(Math.sqrt(variance) * 200);
+}
+
+type MapDetailedEntry = {
+  name: string;
+  mapType: string;
+  wins: number;
+  losses: number;
+  draws: number;
+  total: number;
+  winrate: number;
+  deviation: number;
+  volatility: number;
+  confidenceStars: 1 | 2 | 3 | 4 | 5;
+  tier: "S" | "A" | "B" | "C" | "D";
+  hasEnoughData: boolean;
+};
+
+type MapDetailedResult = {
+  data: MapDetailedEntry[];
+  overallWinrate: number;
+  insight: {
+    bestMap: string;
+    bestWinrate: number;
+    worstMap: string;
+    worstWinrate: number;
+    mostVolatile: string;
+    mostVolatileScore: number;
+  };
+};
+
+const MAP_DETAILED_MIN_GAMES = 5;
+
+function getMapDetailedStats(matches: MatchData[]): MapDetailedResult {
+  const mapStats = new Map<
+    string,
+    { wins: number; losses: number; draws: number; mapType: string }
+  >();
+
+  for (const match of matches) {
+    const current = mapStats.get(match.map) ?? {
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      mapType: match.mapType,
+    };
+    if (match.result === "win") current.wins++;
+    else if (match.result === "loss") current.losses++;
+    else current.draws++;
+    mapStats.set(match.map, current);
+  }
+
+  const totalMatches = matches.length;
+  const totalWins = matches.filter((m) => m.result === "win").length;
+  const overallWinrate =
+    totalMatches > 0 ? Math.round((totalWins / totalMatches) * 100) : 50;
+
+  const data: MapDetailedEntry[] = Array.from(mapStats.entries())
+    .map(([name, stats]) => {
+      const total = stats.wins + stats.losses + stats.draws;
+      const winrate =
+        total > 0 ? Math.round((stats.wins / total) * 100) : 0;
+      const deviation = winrate - overallWinrate;
+      const volatility = computeMapVolatility(
+        stats.wins,
+        stats.losses,
+        stats.draws
+      );
+      const confidenceStars = getConfidenceStars(total);
+      const tier = assignMapTier(winrate, total);
+      return {
+        name,
+        mapType: stats.mapType,
+        wins: stats.wins,
+        losses: stats.losses,
+        draws: stats.draws,
+        total,
+        winrate,
+        deviation,
+        volatility,
+        confidenceStars,
+        tier,
+        hasEnoughData: total >= MAP_DETAILED_MIN_GAMES,
+      };
+    })
+    .sort((a, b) => b.winrate - a.winrate);
+
+  const qualified = data.filter((d) => d.hasEnoughData);
+  const best = qualified[0];
+  const worst = qualified.at(-1);
+  const mostVolatile = [...data].sort(
+    (a, b) => b.volatility - a.volatility
+  )[0];
+
+  return {
+    data,
+    overallWinrate,
+    insight: {
+      bestMap: best?.name ?? data[0]?.name ?? "",
+      bestWinrate: best?.winrate ?? data[0]?.winrate ?? 0,
+      worstMap: worst?.name ?? data.at(-1)?.name ?? "",
+      worstWinrate: worst?.winrate ?? data.at(-1)?.winrate ?? 0,
+      mostVolatile: mostVolatile?.name ?? "",
+      mostVolatileScore: mostVolatile?.volatility ?? 0,
+    },
+  };
+}
+
+// --- Hero Map Synergy ---
+
+const HERO_MAP_MIN_GAMES = 3;
+
+function wilsonLower(wins: number, total: number): number {
+  if (total === 0) return 0;
+  const z = 1.96;
+  const p = wins / total;
+  const denominator = 1 + (z * z) / total;
+  const center = p + (z * z) / (2 * total);
+  const spread = z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total));
+  return Math.max(0, Math.round(((center - spread) / denominator) * 100));
+}
+
+function wilsonUpper(wins: number, total: number): number {
+  if (total === 0) return 100;
+  const z = 1.96;
+  const p = wins / total;
+  const denominator = 1 + (z * z) / total;
+  const center = p + (z * z) / (2 * total);
+  const spread = z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total));
+  return Math.min(100, Math.round(((center + spread) / denominator) * 100));
+}
+
+type HeroMapCell = {
+  hero: string;
+  map: string;
+  wins: number;
+  total: number;
+  winrate: number;
+  hasEnoughData: boolean;
+};
+
+type BestHeroPerMap = {
+  map: string;
+  mapType: string;
+  hero: string;
+  role: string;
+  winrate: number;
+  total: number;
+  confidenceLow: number;
+  confidenceHigh: number;
+};
+
+type HeroMapSynergyResult = {
+  matrix: HeroMapCell[];
+  heroes: string[];
+  maps: string[];
+  bestHeroPerMap: BestHeroPerMap[];
+};
+
+function getHeroMapSynergy(matches: MatchData[]): HeroMapSynergyResult {
+  const cellStats = new Map<string, { wins: number; total: number }>();
+  const heroRoles = new Map<string, string>();
+  const mapTypes = new Map<string, string>();
+  const heroCounts = new Map<string, number>();
+  const mapCounts = new Map<string, number>();
+
+  for (const match of matches) {
+    mapTypes.set(match.map, match.mapType);
+    mapCounts.set(match.map, (mapCounts.get(match.map) ?? 0) + 1);
+
+    for (const hero of match.heroes) {
+      heroRoles.set(hero.hero, hero.role);
+      heroCounts.set(hero.hero, (heroCounts.get(hero.hero) ?? 0) + 1);
+
+      const key = `${hero.hero}||${match.map}`;
+      const current = cellStats.get(key) ?? { wins: 0, total: 0 };
+      current.total++;
+      if (match.result === "win") current.wins++;
+      cellStats.set(key, current);
+    }
+  }
+
+  const heroes = Array.from(heroCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 15)
+    .map(([hero]) => hero);
+
+  const maps = Array.from(mapCounts.entries())
+    .sort((a, b) => b[1] - a[1])
+    .map(([map]) => map);
+
+  const matrix: HeroMapCell[] = [];
+  for (const hero of heroes) {
+    for (const map of maps) {
+      const key = `${hero}||${map}`;
+      const stats = cellStats.get(key) ?? { wins: 0, total: 0 };
+      const winrate =
+        stats.total > 0 ? Math.round((stats.wins / stats.total) * 100) : 0;
+      matrix.push({
+        hero,
+        map,
+        wins: stats.wins,
+        total: stats.total,
+        winrate,
+        hasEnoughData: stats.total >= HERO_MAP_MIN_GAMES,
+      });
+    }
+  }
+
+  const bestHeroPerMap: BestHeroPerMap[] = [];
+  for (const map of maps) {
+    const candidates: { hero: string; wins: number; total: number }[] = [];
+    for (const [hero] of heroCounts) {
+      const key = `${hero}||${map}`;
+      const stats = cellStats.get(key);
+      if (stats && stats.total >= HERO_MAP_MIN_GAMES) {
+        candidates.push({ hero, ...stats });
+      }
+    }
+    if (candidates.length === 0) continue;
+
+    const best = candidates.reduce((a, b) =>
+      b.wins / b.total > a.wins / a.total ? b : a
+    );
+
+    bestHeroPerMap.push({
+      map,
+      mapType: mapTypes.get(map) ?? "",
+      hero: best.hero,
+      role: heroRoles.get(best.hero) ?? "",
+      winrate: Math.round((best.wins / best.total) * 100),
+      total: best.total,
+      confidenceLow: wilsonLower(best.wins, best.total),
+      confidenceHigh: wilsonUpper(best.wins, best.total),
+    });
+  }
+
+  return { matrix, heroes, maps, bestHeroPerMap };
+}
+
+// --- Map Learning Curve ---
+
+const MAP_LEARNING_MIN_GAMES = 6;
+
+type MapLearningEntry = {
+  map: string;
+  mapType: string;
+  earlyWinrate: number;
+  lateWinrate: number;
+  improvement: number;
+  totalGames: number;
+  earlyGames: number;
+  lateGames: number;
+  hasEnoughData: boolean;
+};
+
+type MapLearningResult = {
+  data: MapLearningEntry[];
+  insight: {
+    mostImproved: string;
+    improvementDelta: number;
+    mostDeclined: string;
+    declineDelta: number;
+  };
+};
+
+function getMapLearningCurve(matches: MatchData[]): MapLearningResult {
+  const mapMatches = new Map<
+    string,
+    { result: string; playedAt: Date; mapType: string }[]
+  >();
+
+  for (const match of matches) {
+    const current = mapMatches.get(match.map) ?? [];
+    current.push({
+      result: match.result,
+      playedAt: new Date(match.playedAt),
+      mapType: match.mapType,
+    });
+    mapMatches.set(match.map, current);
+  }
+
+  const data: MapLearningEntry[] = [];
+
+  for (const [map, matchList] of mapMatches) {
+    const sorted = [...matchList].sort(
+      (a, b) => a.playedAt.getTime() - b.playedAt.getTime()
+    );
+    const totalGames = sorted.length;
+    const hasEnoughData = totalGames >= MAP_LEARNING_MIN_GAMES;
+
+    const splitPoint = Math.floor(totalGames / 2);
+    const early = sorted.slice(0, splitPoint);
+    const late = sorted.slice(splitPoint);
+
+    const earlyWins = early.filter((m) => m.result === "win").length;
+    const lateWins = late.filter((m) => m.result === "win").length;
+
+    const earlyWinrate =
+      early.length > 0 ? Math.round((earlyWins / early.length) * 100) : 0;
+    const lateWinrate =
+      late.length > 0 ? Math.round((lateWins / late.length) * 100) : 0;
+    const improvement = lateWinrate - earlyWinrate;
+
+    data.push({
+      map,
+      mapType: sorted[0]?.mapType ?? "",
+      earlyWinrate,
+      lateWinrate,
+      improvement,
+      totalGames,
+      earlyGames: early.length,
+      lateGames: late.length,
+      hasEnoughData,
+    });
+  }
+
+  data.sort((a, b) => b.improvement - a.improvement);
+
+  const qualified = data.filter((d) => d.hasEnoughData);
+  const mostImproved = qualified[0];
+  const mostDeclined = qualified.at(-1);
+
+  return {
+    data,
+    insight: {
+      mostImproved: mostImproved?.map ?? "",
+      improvementDelta: mostImproved?.improvement ?? 0,
+      mostDeclined: mostDeclined?.map ?? "",
+      declineDelta: mostDeclined?.improvement ?? 0,
+    },
+  };
+}
+
+// --- Map Familiarity ---
+
+function computeVarietyScore(
+  mapCounts: Map<string, number>,
+  totalGames: number
+): number {
+  if (totalGames === 0) return 0;
+
+  let entropy = 0;
+  for (const mapName of MAP_NAMES) {
+    const count = mapCounts.get(mapName) ?? 0;
+    if (count === 0) continue;
+    const p = count / totalGames;
+    entropy -= p * Math.log2(p);
+  }
+  const maxEntropy = Math.log2(MAP_NAMES.length);
+  return maxEntropy > 0 ? Math.round((entropy / maxEntropy) * 100) : 0;
+}
+
+type MapFamiliarityEntry = {
+  name: string;
+  mapType: string;
+  gamesPlayed: number;
+  pctOfTotal: number;
+  lastResults: ("win" | "loss" | "draw")[];
+};
+
+type MapFamiliarityResult = {
+  data: MapFamiliarityEntry[];
+  varietyScore: number;
+  avoidedMaps: { name: string; mapType: string }[];
+  totalMapsPlayed: number;
+  totalMapsAvailable: number;
+};
+
+function getMapFamiliarityData(matches: MatchData[]): MapFamiliarityResult {
+  const mapStats = new Map<
+    string,
+    {
+      count: number;
+      mapType: string;
+      results: { result: string; playedAt: Date }[];
+    }
+  >();
+  const totalGames = matches.length;
+
+  for (const match of matches) {
+    const current = mapStats.get(match.map) ?? {
+      count: 0,
+      mapType: match.mapType,
+      results: [],
+    };
+    current.count++;
+    current.results.push({
+      result: match.result,
+      playedAt: new Date(match.playedAt),
+    });
+    mapStats.set(match.map, current);
+  }
+
+  const mapCounts = new Map<string, number>();
+  for (const [map, stats] of mapStats) {
+    mapCounts.set(map, stats.count);
+  }
+
+  const varietyScore = computeVarietyScore(mapCounts, totalGames);
+
+  const data: MapFamiliarityEntry[] = Array.from(mapStats.entries())
+    .map(([name, stats]) => {
+      const sorted = [...stats.results].sort(
+        (a, b) => b.playedAt.getTime() - a.playedAt.getTime()
+      );
+      const lastResults = sorted
+        .slice(0, 10)
+        .map((r) => r.result as "win" | "loss" | "draw");
+      return {
+        name,
+        mapType: stats.mapType,
+        gamesPlayed: stats.count,
+        pctOfTotal:
+          totalGames > 0
+            ? Math.round((stats.count / totalGames) * 100)
+            : 0,
+        lastResults,
+      };
+    })
+    .sort((a, b) => b.gamesPlayed - a.gamesPlayed);
+
+  const playedMapNames = new Set(mapStats.keys());
+  const avoidedMaps = MAPS.filter((m) => !playedMapNames.has(m.name)).map(
+    (m) => ({ name: m.name, mapType: m.type })
+  );
+
+  return {
+    data,
+    varietyScore,
+    avoidedMaps,
+    totalMapsPlayed: playedMapNames.size,
+    totalMapsAvailable: MAPS.length,
+  };
+}
+
+// --- Repeat Map Data ---
+
+type RepeatMapResult = {
+  firstOccurrenceWinrate: number;
+  repeatWinrate: number;
+  firstOccurrenceTotal: number;
+  repeatTotal: number;
+  delta: number;
+  hasEnoughData: boolean;
+  insight: string;
+};
+
+function getRepeatMapData(matches: MatchData[]): RepeatMapResult {
+  const sessionMap = new Map<string, MatchData[]>();
+
+  for (const match of matches) {
+    const d = new Date(match.playedAt);
+    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const current = sessionMap.get(key) ?? [];
+    current.push(match);
+    sessionMap.set(key, current);
+  }
+
+  let firstWins = 0;
+  let firstTotal = 0;
+  let repeatWins = 0;
+  let repeatTotal = 0;
+
+  for (const [, session] of sessionMap) {
+    const seenMaps = new Set<string>();
+    const sorted = [...session].sort(
+      (a, b) =>
+        new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime()
+    );
+
+    for (const match of sorted) {
+      if (!seenMaps.has(match.map)) {
+        seenMaps.add(match.map);
+        firstTotal++;
+        if (match.result === "win") firstWins++;
+      } else {
+        repeatTotal++;
+        if (match.result === "win") repeatWins++;
+      }
+    }
+  }
+
+  const firstOccurrenceWinrate =
+    firstTotal > 0 ? Math.round((firstWins / firstTotal) * 100) : 0;
+  const repeatWinrate =
+    repeatTotal > 0 ? Math.round((repeatWins / repeatTotal) * 100) : 0;
+  const delta = repeatWinrate - firstOccurrenceWinrate;
+  const hasEnoughData = repeatTotal >= 5;
+
+  let insight: string;
+  if (!hasEnoughData) {
+    insight =
+      "Not enough repeat map data yet — play more sessions to see patterns";
+  } else if (Math.abs(delta) < 5) {
+    insight = "Repeat maps have no meaningful effect on your winrate";
+  } else if (delta > 0) {
+    insight = `You perform ${delta}% better when you see the same map twice in a session`;
+  } else {
+    insight = `You perform ${Math.abs(delta)}% worse on repeat maps — fatigue may be a factor`;
+  }
+
+  return {
+    firstOccurrenceWinrate,
+    repeatWinrate,
+    firstOccurrenceTotal: firstTotal,
+    repeatTotal,
+    delta,
+    hasEnoughData,
+    insight,
+  };
+}
+
+// --- Map Timeline ---
+
+type MapTimelineEntry = {
+  result: "win" | "loss" | "draw";
+  playedAt: Date;
+  index: number;
+};
+
+type MapTimelineMapData = {
+  map: string;
+  mapType: string;
+  history: MapTimelineEntry[];
+  lastPlayedDaysAgo: number | null;
+  rotationGapDays: number | null;
+};
+
+type MapTimelineResult = {
+  maps: MapTimelineMapData[];
+};
+
+function getMapTimelineData(matches: MatchData[]): MapTimelineResult {
+  const mapMatches = new Map<
+    string,
+    { result: string; playedAt: Date; mapType: string }[]
+  >();
+
+  for (const match of matches) {
+    const current = mapMatches.get(match.map) ?? [];
+    current.push({
+      result: match.result,
+      playedAt: new Date(match.playedAt),
+      mapType: match.mapType,
+    });
+    mapMatches.set(match.map, current);
+  }
+
+  const now = new Date();
+  const maps: MapTimelineMapData[] = [];
+
+  for (const [map, matchList] of mapMatches) {
+    const sorted = [...matchList].sort(
+      (a, b) => a.playedAt.getTime() - b.playedAt.getTime()
+    );
+    const history: MapTimelineEntry[] = sorted.slice(-20).map((m, i) => ({
+      result: m.result as "win" | "loss" | "draw",
+      playedAt: m.playedAt,
+      index: i,
+    }));
+
+    const lastPlayed = sorted.at(-1)?.playedAt;
+    const lastPlayedDaysAgo = lastPlayed
+      ? Math.floor(
+          (now.getTime() - lastPlayed.getTime()) / (1000 * 60 * 60 * 24)
+        )
+      : null;
+
+    let rotationGapDays: number | null = null;
+    if (sorted.length >= 2) {
+      const gaps: number[] = [];
+      for (let i = 1; i < sorted.length; i++) {
+        const gap =
+          (sorted[i].playedAt.getTime() - sorted[i - 1].playedAt.getTime()) /
+          (1000 * 60 * 60 * 24);
+        gaps.push(gap);
+      }
+      gaps.sort((a, b) => a - b);
+      const mid = Math.floor(gaps.length / 2);
+      rotationGapDays = Math.round(
+        gaps.length % 2 === 0
+          ? ((gaps[mid - 1] ?? 0) + (gaps[mid] ?? 0)) / 2
+          : (gaps[mid] ?? 0)
+      );
+    }
+
+    maps.push({
+      map,
+      mapType: sorted[0]?.mapType ?? "",
+      history,
+      lastPlayedDaysAgo,
+      rotationGapDays,
+    });
+  }
+
+  maps.sort((a, b) => b.history.length - a.history.length);
+
+  return { maps };
+}
+
 export {
   filterMatchesByRole,
   getMapWinLossData,
@@ -1120,12 +1761,21 @@ export {
   getOneTrickStats,
   getHeroPoolDiversity,
   getHeroSwapStats,
+  getMapDetailedStats,
+  getHeroMapSynergy,
+  getMapLearningCurve,
+  getMapFamiliarityData,
+  getRepeatMapData,
+  getMapTimelineData,
   HERO_WINRATE_MIN_MATCHES,
   GROUP_SIZE_MIN_MATCHES,
   ROLE_WINRATE_MIN_MATCHES,
   SWAP_MIN_PERCENTAGE,
   ONE_TRICK_THRESHOLD,
   SPECIALIST_THRESHOLD,
+  HERO_MAP_MIN_GAMES,
+  MAP_DETAILED_MIN_GAMES,
+  MAP_LEARNING_MIN_GAMES,
 };
 
 export type {
@@ -1156,4 +1806,17 @@ export type {
   HeroPoolDiversityResult,
   HeroSwapEntry,
   HeroSwapResult,
+  MapDetailedEntry,
+  MapDetailedResult,
+  HeroMapCell,
+  BestHeroPerMap,
+  HeroMapSynergyResult,
+  MapLearningEntry,
+  MapLearningResult,
+  MapFamiliarityEntry,
+  MapFamiliarityResult,
+  RepeatMapResult,
+  MapTimelineEntry,
+  MapTimelineMapData,
+  MapTimelineResult,
 };
