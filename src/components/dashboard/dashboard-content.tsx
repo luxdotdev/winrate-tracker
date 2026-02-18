@@ -24,6 +24,7 @@ import {
   getMostPlayedHeroes,
   getRecentFormData,
   getRollingWinrateData,
+  getRoleStats,
   getStreakData,
   getSummaryStats,
   type MatchData,
@@ -94,6 +95,7 @@ export function DashboardContent({ matches }: DashboardContentProps) {
     () => getGroupSizeWinrates(filteredMatches),
     [filteredMatches]
   );
+  const roleStats = useMemo(() => getRoleStats(matches), [matches]);
 
   return (
     <div className="space-y-6">
@@ -143,6 +145,7 @@ export function DashboardContent({ matches }: DashboardContentProps) {
         streakData={streakData}
         recentForm={recentForm}
         groupSizeWinrates={groupSizeWinrates}
+        roleStats={roleStats}
       />
 
       <MatchList matches={filteredMatches} />
