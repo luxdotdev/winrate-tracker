@@ -9,6 +9,9 @@ import { HeroWinrateChart } from "@/components/dashboard/charts/hero-winrate-cha
 import { MapWinLossChart } from "@/components/dashboard/charts/map-win-loss-chart";
 import { MostPlayedHeroesChart } from "@/components/dashboard/charts/most-played-heroes-chart";
 import { RecentFormChart } from "@/components/dashboard/charts/recent-form-chart";
+import { RoleDistributionChart } from "@/components/dashboard/charts/role-distribution-chart";
+import { RoleFlexibilityCard } from "@/components/dashboard/charts/role-flexibility-card";
+import { RoleWinrateChart } from "@/components/dashboard/charts/role-winrate-chart";
 import { StreakChart } from "@/components/dashboard/charts/streak-chart";
 import { WinrateTrendChart } from "@/components/dashboard/charts/winrate-trend-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +26,7 @@ import type {
   MostPlayedHeroResult,
   RecentFormData,
   RollingWinrateResult,
+  RoleStatsResult,
   StreakData,
 } from "@/lib/match-stats";
 import {
@@ -46,6 +50,7 @@ type DashboardTabsProps = {
   streakData: StreakData;
   recentForm: RecentFormData;
   groupSizeWinrates: GroupSizeResult;
+  roleStats: RoleStatsResult;
 };
 
 function PlaceholderTab({
@@ -77,6 +82,7 @@ export function DashboardTabs({
   streakData,
   recentForm,
   groupSizeWinrates,
+  roleStats,
 }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview">
@@ -101,7 +107,7 @@ export function DashboardTabs({
           <Users className="size-4" aria-hidden="true" />
           Groups
         </TabsTrigger>
-        <TabsTrigger value="roles" disabled>
+        <TabsTrigger value="roles">
           <Shield className="size-4" aria-hidden="true" />
           Roles
         </TabsTrigger>
@@ -148,11 +154,12 @@ export function DashboardTabs({
         </div>
       </TabsContent>
 
-      <TabsContent value="roles">
-        <PlaceholderTab
-          title="Role Performance coming soon"
-          description="Tank, Damage, and Support breakdowns with role-specific winrates and hero pools."
-        />
+      <TabsContent value="roles" className="space-y-4 pt-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <RoleDistributionChart result={roleStats} />
+          <RoleWinrateChart result={roleStats} />
+        </div>
+        <RoleFlexibilityCard result={roleStats} />
       </TabsContent>
     </Tabs>
   );
