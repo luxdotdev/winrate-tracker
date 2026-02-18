@@ -1,6 +1,7 @@
+import { track } from "@vercel/analytics/server";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { magicLink } from "better-auth/plugins";
+import { createAuthMiddleware, magicLink } from "better-auth/plugins";
 import { prisma } from "./prisma";
 
 export const auth = betterAuth({
@@ -29,4 +30,17 @@ export const auth = betterAuth({
       },
     }),
   ],
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path.startsWith("/sign-up")) {
+        const newSession = ctx.context.newSession;
+
+        if (newSession) {
+          await track("sign-up", {
+            email: newSession.user.email,
+          });
+        }
+      }
+    }),
+  },
 });
