@@ -1,10 +1,4 @@
-export type MapType =
-  | "Control"
-  | "Escort"
-  | "Hybrid"
-  | "Push"
-  | "Flashpoint"
-  | "Clash";
+export type MapType = "Control" | "Escort" | "Hybrid" | "Push" | "Flashpoint";
 
 export type MapEntry = {
   name: string;
@@ -45,9 +39,6 @@ export const MAPS: MapEntry[] = [
   { name: "Aatlis", type: "Flashpoint" },
   { name: "New Junk City", type: "Flashpoint" },
   { name: "Suravasa", type: "Flashpoint" },
-
-  { name: "Hanaoka", type: "Clash" },
-  { name: "Throne of Anubis", type: "Clash" },
 ];
 
 export const MAP_TYPES: MapType[] = [
@@ -56,7 +47,6 @@ export const MAP_TYPES: MapType[] = [
   "Hybrid",
   "Push",
   "Flashpoint",
-  "Clash",
 ];
 
 export const MAP_NAMES = MAPS.map((m) => m.name);
