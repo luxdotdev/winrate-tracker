@@ -200,7 +200,7 @@ export function LandingPage() {
                 <Link href="/sign-up">Get Started</Link>
               </Button>
               <Link
-                href="https://github.com/lucasdoell/winrate-tracker"
+                href="https://github.com/luxdotdev/winrate-tracker"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-foreground text-sm leading-6 font-semibold"
