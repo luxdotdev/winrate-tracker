@@ -5,9 +5,12 @@ import { GameModeDistributionChart } from "@/components/dashboard/charts/game-mo
 import { GameModeWinrateChart } from "@/components/dashboard/charts/game-mode-winrate-chart";
 import { GroupSizeBreakdownChart } from "@/components/dashboard/charts/group-size-breakdown-chart";
 import { GroupSizeWinrateChart } from "@/components/dashboard/charts/group-size-winrate-chart";
+import { HeroPoolDiversityCard } from "@/components/dashboard/charts/hero-pool-diversity-card";
+import { HeroSwapAnalyticsChart } from "@/components/dashboard/charts/hero-swap-analytics-chart";
 import { HeroWinrateChart } from "@/components/dashboard/charts/hero-winrate-chart";
 import { MapWinLossChart } from "@/components/dashboard/charts/map-win-loss-chart";
 import { MostPlayedHeroesChart } from "@/components/dashboard/charts/most-played-heroes-chart";
+import { OneTrickDetectionCard } from "@/components/dashboard/charts/one-trick-detection-card";
 import { RecentFormChart } from "@/components/dashboard/charts/recent-form-chart";
 import { RoleDistributionChart } from "@/components/dashboard/charts/role-distribution-chart";
 import { RoleFlexibilityCard } from "@/components/dashboard/charts/role-flexibility-card";
@@ -20,10 +23,13 @@ import type {
   GameModeDistResult,
   GameModeWinrateResult,
   GroupSizeResult,
+  HeroPoolDiversityResult,
+  HeroSwapResult,
   HeroWinrateResult,
   MapWinLossResult,
   MatchData,
   MostPlayedHeroResult,
+  OneTrickResult,
   RecentFormData,
   RollingWinrateResult,
   RoleStatsResult,
@@ -51,6 +57,9 @@ type DashboardTabsProps = {
   recentForm: RecentFormData;
   groupSizeWinrates: GroupSizeResult;
   roleStats: RoleStatsResult;
+  oneTrick: OneTrickResult;
+  heroPoolDiversity: HeroPoolDiversityResult;
+  heroSwapStats: HeroSwapResult;
 };
 
 function PlaceholderTab({
@@ -83,6 +92,9 @@ export function DashboardTabs({
   recentForm,
   groupSizeWinrates,
   roleStats,
+  oneTrick,
+  heroPoolDiversity,
+  heroSwapStats,
 }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview">
@@ -129,6 +141,12 @@ export function DashboardTabs({
           />
           <HeroWinrateChart result={heroWinrates} />
         </div>
+        <p className="text-sm font-semibold tracking-tight">Hero Deep Dives</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <OneTrickDetectionCard result={oneTrick} />
+          <HeroPoolDiversityCard result={heroPoolDiversity} />
+        </div>
+        <HeroSwapAnalyticsChart result={heroSwapStats} />
       </TabsContent>
 
       <TabsContent value="maps">
