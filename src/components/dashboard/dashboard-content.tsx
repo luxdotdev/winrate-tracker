@@ -18,6 +18,7 @@ import {
   getActivityHeatmapData,
   getGameModeDistribution,
   getGameModeWinrates,
+  getGroupSizeWinrates,
   getHeroWinrates,
   getMapWinLossData,
   getMostPlayedHeroes,
@@ -89,6 +90,10 @@ export function DashboardContent({ matches }: DashboardContentProps) {
     () => getRecentFormData(filteredMatches),
     [filteredMatches]
   );
+  const groupSizeWinrates = useMemo(
+    () => getGroupSizeWinrates(filteredMatches),
+    [filteredMatches]
+  );
 
   return (
     <div className="space-y-6">
@@ -137,6 +142,7 @@ export function DashboardContent({ matches }: DashboardContentProps) {
         activityHeatmap={activityHeatmap}
         streakData={streakData}
         recentForm={recentForm}
+        groupSizeWinrates={groupSizeWinrates}
       />
 
       <MatchList matches={filteredMatches} />
