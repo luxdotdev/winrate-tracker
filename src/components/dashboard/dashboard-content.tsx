@@ -15,11 +15,15 @@ import {
 } from "@/components/ui/select";
 import {
   filterMatchesByRole,
+  getActivityHeatmapData,
   getGameModeDistribution,
   getGameModeWinrates,
   getHeroWinrates,
   getMapWinLossData,
   getMostPlayedHeroes,
+  getRecentFormData,
+  getRollingWinrateData,
+  getStreakData,
   getSummaryStats,
   type MatchData,
   type RoleFilter,
@@ -69,6 +73,22 @@ export function DashboardContent({ matches }: DashboardContentProps) {
     () => getHeroWinrates(filteredMatches),
     [filteredMatches]
   );
+  const rollingWinrate = useMemo(
+    () => getRollingWinrateData(filteredMatches),
+    [filteredMatches]
+  );
+  const activityHeatmap = useMemo(
+    () => getActivityHeatmapData(filteredMatches),
+    [filteredMatches]
+  );
+  const streakData = useMemo(
+    () => getStreakData(filteredMatches),
+    [filteredMatches]
+  );
+  const recentForm = useMemo(
+    () => getRecentFormData(filteredMatches),
+    [filteredMatches]
+  );
 
   return (
     <div className="space-y-6">
@@ -113,6 +133,10 @@ export function DashboardContent({ matches }: DashboardContentProps) {
         mostPlayedHeroes={mostPlayedHeroes}
         heroWinrates={heroWinrates}
         matches={filteredMatches}
+        rollingWinrate={rollingWinrate}
+        activityHeatmap={activityHeatmap}
+        streakData={streakData}
+        recentForm={recentForm}
       />
 
       <MatchList matches={filteredMatches} />
