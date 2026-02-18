@@ -1,17 +1,26 @@
 "use client";
 
 import { ActivityHeatmap } from "@/components/dashboard/charts/activity-heatmap";
+import { BestHeroPerMapCard } from "@/components/dashboard/charts/best-hero-per-map-card";
 import { GameModeDistributionChart } from "@/components/dashboard/charts/game-mode-distribution-chart";
 import { GameModeWinrateChart } from "@/components/dashboard/charts/game-mode-winrate-chart";
 import { GroupSizeBreakdownChart } from "@/components/dashboard/charts/group-size-breakdown-chart";
 import { GroupSizeWinrateChart } from "@/components/dashboard/charts/group-size-winrate-chart";
+import { HeroMapSynergyMatrix } from "@/components/dashboard/charts/hero-map-synergy-matrix";
 import { HeroPoolDiversityCard } from "@/components/dashboard/charts/hero-pool-diversity-card";
 import { HeroSwapAnalyticsChart } from "@/components/dashboard/charts/hero-swap-analytics-chart";
 import { HeroWinrateChart } from "@/components/dashboard/charts/hero-winrate-chart";
+import { MapFamiliarityCard } from "@/components/dashboard/charts/map-familiarity-card";
+import { MapLearningCurveCard } from "@/components/dashboard/charts/map-learning-curve-card";
+import { MapTierListCard } from "@/components/dashboard/charts/map-tier-list-card";
+import { MapTimelineCard } from "@/components/dashboard/charts/map-timeline-card";
+import { MapVolatilityCard } from "@/components/dashboard/charts/map-volatility-card";
 import { MapWinLossChart } from "@/components/dashboard/charts/map-win-loss-chart";
+import { MapWinrateRankingChart } from "@/components/dashboard/charts/map-winrate-ranking-chart";
 import { MostPlayedHeroesChart } from "@/components/dashboard/charts/most-played-heroes-chart";
 import { OneTrickDetectionCard } from "@/components/dashboard/charts/one-trick-detection-card";
 import { RecentFormChart } from "@/components/dashboard/charts/recent-form-chart";
+import { RepeatMapCard } from "@/components/dashboard/charts/repeat-map-card";
 import { RoleDistributionChart } from "@/components/dashboard/charts/role-distribution-chart";
 import { RoleFlexibilityCard } from "@/components/dashboard/charts/role-flexibility-card";
 import { RoleWinrateChart } from "@/components/dashboard/charts/role-winrate-chart";
@@ -23,14 +32,20 @@ import type {
   GameModeDistResult,
   GameModeWinrateResult,
   GroupSizeResult,
+  HeroMapSynergyResult,
   HeroPoolDiversityResult,
   HeroSwapResult,
   HeroWinrateResult,
+  MapDetailedResult,
+  MapFamiliarityResult,
+  MapLearningResult,
+  MapTimelineResult,
   MapWinLossResult,
   MatchData,
   MostPlayedHeroResult,
   OneTrickResult,
   RecentFormData,
+  RepeatMapResult,
   RollingWinrateResult,
   RoleStatsResult,
   StreakData,
@@ -60,6 +75,12 @@ type DashboardTabsProps = {
   oneTrick: OneTrickResult;
   heroPoolDiversity: HeroPoolDiversityResult;
   heroSwapStats: HeroSwapResult;
+  mapDetailedStats: MapDetailedResult;
+  heroMapSynergy: HeroMapSynergyResult;
+  mapLearningCurve: MapLearningResult;
+  mapFamiliarity: MapFamiliarityResult;
+  repeatMapData: RepeatMapResult;
+  mapTimeline: MapTimelineResult;
 };
 
 function PlaceholderTab({
@@ -95,6 +116,12 @@ export function DashboardTabs({
   oneTrick,
   heroPoolDiversity,
   heroSwapStats,
+  mapDetailedStats,
+  heroMapSynergy,
+  mapLearningCurve,
+  mapFamiliarity,
+  repeatMapData,
+  mapTimeline,
 }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview">
@@ -107,7 +134,7 @@ export function DashboardTabs({
           <Crosshair className="size-4" aria-hidden="true" />
           Heroes
         </TabsTrigger>
-        <TabsTrigger value="maps" disabled>
+        <TabsTrigger value="maps">
           <Map className="size-4" aria-hidden="true" />
           Maps
         </TabsTrigger>
@@ -149,11 +176,27 @@ export function DashboardTabs({
         <HeroSwapAnalyticsChart result={heroSwapStats} />
       </TabsContent>
 
-      <TabsContent value="maps">
-        <PlaceholderTab
-          title="Map Analytics coming soon"
-          description="Deep dives into individual map performance, map-specific hero picks, and mode breakdowns."
-        />
+      <TabsContent value="maps" className="space-y-4 pt-4">
+        <MapWinrateRankingChart result={mapDetailedStats} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <MapTierListCard result={mapDetailedStats} />
+          <MapVolatilityCard result={mapDetailedStats} />
+        </div>
+        <p className="text-sm font-semibold tracking-tight">
+          Hero &times; Map Analysis
+        </p>
+        <HeroMapSynergyMatrix result={heroMapSynergy} />
+        <BestHeroPerMapCard result={heroMapSynergy} />
+        <p className="text-sm font-semibold tracking-tight">Map Mastery</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <MapLearningCurveCard result={mapLearningCurve} />
+          <MapTimelineCard result={mapTimeline} />
+        </div>
+        <p className="text-sm font-semibold tracking-tight">Patterns</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <MapFamiliarityCard result={mapFamiliarity} />
+          <RepeatMapCard result={repeatMapData} />
+        </div>
       </TabsContent>
 
       <TabsContent value="time" className="space-y-4 pt-4">
