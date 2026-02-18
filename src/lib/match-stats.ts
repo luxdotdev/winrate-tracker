@@ -524,7 +524,11 @@ function getActivityHeatmapData(
         ) / 10
       : 0;
 
-  return { data, maxCount, insight: { peakDayOfWeek, avgGamesPerActiveDay, totalActiveDays } };
+  return {
+    data,
+    maxCount,
+    insight: { peakDayOfWeek, avgGamesPerActiveDay, totalActiveDays },
+  };
 }
 
 // --- Streak Data ---
@@ -549,7 +553,10 @@ function getStreakData(matches: MatchData[]): StreakData {
 
   const recentResults: RecentResult[] = sorted
     .slice(0, 20)
-    .map((m) => ({ matchId: m.id, result: m.result as "win" | "loss" | "draw" }));
+    .map((m) => ({
+      matchId: m.id,
+      result: m.result as "win" | "loss" | "draw",
+    }));
 
   let currentStreak = 0;
   let currentStreakType: "win" | "loss" | "none" = "none";
@@ -684,7 +691,10 @@ type GroupSizeResult = {
 };
 
 function getGroupSizeWinrates(matches: MatchData[]): GroupSizeResult {
-  const buckets = new Map<number, { wins: number; losses: number; draws: number }>();
+  const buckets = new Map<
+    number,
+    { wins: number; losses: number; draws: number }
+  >();
 
   for (const match of matches) {
     const size = match.groupSize;
@@ -699,9 +709,7 @@ function getGroupSizeWinrates(matches: MatchData[]): GroupSizeResult {
     .map(([groupSize, stats]) => {
       const total = stats.wins + stats.losses + stats.draws;
       const winrate =
-        total > 0
-          ? Math.round((stats.wins / total) * 1000) / 10
-          : 0;
+        total > 0 ? Math.round((stats.wins / total) * 1000) / 10 : 0;
       return {
         groupSize,
         label: GROUP_SIZE_LABELS[groupSize] ?? `${groupSize}-Stack`,
@@ -824,7 +832,9 @@ function getRoleStats(matches: MatchData[]): RoleStatsResult {
   const distribution: RoleDistEntry[] = ROLES.map((role) => {
     const weightedCount = weightedCounts.get(role) ?? 0;
     const percentage =
-      totalWeight > 0 ? Math.round((weightedCount / totalWeight) * 1000) / 10 : 0;
+      totalWeight > 0
+        ? Math.round((weightedCount / totalWeight) * 1000) / 10
+        : 0;
     return {
       role,
       weightedCount,
@@ -931,7 +941,10 @@ function getOneTrickStats(matches: MatchData[]): OneTrickResult {
 
   for (const match of matches) {
     for (const hero of match.heroes) {
-      const current = heroWeights.get(hero.hero) ?? { weight: 0, role: hero.role };
+      const current = heroWeights.get(hero.hero) ?? {
+        weight: 0,
+        role: hero.role,
+      };
       current.weight += hero.percentage;
       heroWeights.set(hero.hero, current);
     }
@@ -1087,8 +1100,18 @@ function getHeroSwapStats(matches: MatchData[]): HeroSwapResult {
   }
 
   const data: HeroSwapEntry[] = [
-    { label: "Swapped", winrate: swapWinrate, wins: swapWins, total: swapTotal },
-    { label: "Stayed", winrate: noSwapWinrate, wins: noSwapWins, total: noSwapTotal },
+    {
+      label: "Swapped",
+      winrate: swapWinrate,
+      wins: swapWins,
+      total: swapTotal,
+    },
+    {
+      label: "Stayed",
+      winrate: noSwapWinrate,
+      wins: noSwapWins,
+      total: noSwapTotal,
+    },
   ];
 
   return {
@@ -1203,8 +1226,7 @@ function getMapDetailedStats(matches: MatchData[]): MapDetailedResult {
   const data: MapDetailedEntry[] = Array.from(mapStats.entries())
     .map(([name, stats]) => {
       const total = stats.wins + stats.losses + stats.draws;
-      const winrate =
-        total > 0 ? Math.round((stats.wins / total) * 100) : 0;
+      const winrate = total > 0 ? Math.round((stats.wins / total) * 100) : 0;
       const deviation = winrate - overallWinrate;
       const volatility = computeMapVolatility(
         stats.wins,
@@ -1233,9 +1255,7 @@ function getMapDetailedStats(matches: MatchData[]): MapDetailedResult {
   const qualified = data.filter((d) => d.hasEnoughData);
   const best = qualified[0];
   const worst = qualified.at(-1);
-  const mostVolatile = [...data].sort(
-    (a, b) => b.volatility - a.volatility
-  )[0];
+  const mostVolatile = [...data].sort((a, b) => b.volatility - a.volatility)[0];
 
   return {
     data,
@@ -1261,7 +1281,8 @@ function wilsonLower(wins: number, total: number): number {
   const p = wins / total;
   const denominator = 1 + (z * z) / total;
   const center = p + (z * z) / (2 * total);
-  const spread = z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total));
+  const spread =
+    z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total));
   return Math.max(0, Math.round(((center - spread) / denominator) * 100));
 }
 
@@ -1271,7 +1292,8 @@ function wilsonUpper(wins: number, total: number): number {
   const p = wins / total;
   const denominator = 1 + (z * z) / total;
   const center = p + (z * z) / (2 * total);
-  const spread = z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total));
+  const spread =
+    z * Math.sqrt((p * (1 - p)) / total + (z * z) / (4 * total * total));
   return Math.min(100, Math.round(((center + spread) / denominator) * 100));
 }
 
@@ -1557,9 +1579,7 @@ function getMapFamiliarityData(matches: MatchData[]): MapFamiliarityResult {
         mapType: stats.mapType,
         gamesPlayed: stats.count,
         pctOfTotal:
-          totalGames > 0
-            ? Math.round((stats.count / totalGames) * 100)
-            : 0,
+          totalGames > 0 ? Math.round((stats.count / totalGames) * 100) : 0,
         lastResults,
       };
     })
@@ -1610,8 +1630,7 @@ function getRepeatMapData(matches: MatchData[]): RepeatMapResult {
   for (const [, session] of sessionMap) {
     const seenMaps = new Set<string>();
     const sorted = [...session].sort(
-      (a, b) =>
-        new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime()
+      (a, b) => new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime()
     );
 
     for (const match of sorted) {
@@ -1744,79 +1763,310 @@ function getMapTimelineData(matches: MatchData[]): MapTimelineResult {
   return { maps };
 }
 
+// --- Session Analysis ---
+
+const SESSION_GAP_MINUTES = 30;
+
+type SessionEntry = {
+  sessionIndex: number;
+  date: string;
+  gamesPlayed: number;
+  wins: number;
+  losses: number;
+  winrate: number;
+  durationMinutes: number | null;
+};
+
+type SessionAnalysisResult = {
+  sessions: SessionEntry[];
+  avgSessionWinrate: number;
+  avgGamesPerSession: number;
+  bestSession: SessionEntry | null;
+  worstSession: SessionEntry | null;
+  insight: string;
+};
+
+function getSessionAnalysis(matches: MatchData[]): SessionAnalysisResult {
+  if (matches.length === 0) {
+    return {
+      sessions: [],
+      avgSessionWinrate: 0,
+      avgGamesPerSession: 0,
+      bestSession: null,
+      worstSession: null,
+      insight: "No matches recorded yet.",
+    };
+  }
+
+  const sorted = [...matches].sort(
+    (a, b) => a.playedAt.getTime() - b.playedAt.getTime()
+  );
+
+  const rawSessions: MatchData[][] = [];
+  let current: MatchData[] = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = current.at(-1)!;
+    const gap =
+      (sorted[i].playedAt.getTime() - prev.playedAt.getTime()) / (1000 * 60);
+    if (gap >= SESSION_GAP_MINUTES) {
+      rawSessions.push(current);
+      current = [sorted[i]];
+    } else {
+      current.push(sorted[i]);
+    }
+  }
+  rawSessions.push(current);
+
+  const sessions: SessionEntry[] = rawSessions.map((group, i) => {
+    const wins = group.filter((m) => m.result === "win").length;
+    const losses = group.filter((m) => m.result === "loss").length;
+    const winrate =
+      group.length > 0 ? Math.round((wins / group.length) * 100) : 0;
+
+    const first = group[0].playedAt;
+    const last = group.at(-1)!.playedAt;
+    const durationMinutes =
+      group.length > 1
+        ? Math.round((last.getTime() - first.getTime()) / (1000 * 60))
+        : null;
+
+    const dateStr = first.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+
+    return {
+      sessionIndex: i + 1,
+      date: dateStr,
+      gamesPlayed: group.length,
+      wins,
+      losses,
+      winrate,
+      durationMinutes,
+    };
+  });
+
+  const totalWinrate = sessions.reduce((sum, s) => sum + s.winrate, 0);
+  const avgSessionWinrate =
+    sessions.length > 0 ? Math.round(totalWinrate / sessions.length) : 0;
+  const avgGamesPerSession =
+    sessions.length > 0
+      ? Math.round(
+          sessions.reduce((sum, s) => sum + s.gamesPlayed, 0) / sessions.length
+        )
+      : 0;
+
+  const qualifiedSessions = sessions.filter((s) => s.gamesPlayed >= 2);
+  const bestSession =
+    qualifiedSessions.length > 0
+      ? qualifiedSessions.reduce((best, s) =>
+          s.winrate > best.winrate ? s : best
+        )
+      : null;
+  const worstSession =
+    qualifiedSessions.length > 0
+      ? qualifiedSessions.reduce((worst, s) =>
+          s.winrate < worst.winrate ? s : worst
+        )
+      : null;
+
+  const insight =
+    sessions.length === 1
+      ? `1 session tracked — ${avgSessionWinrate}% winrate with ${avgGamesPerSession} game${avgGamesPerSession !== 1 ? "s" : ""}.`
+      : `Across ${sessions.length} sessions you average ${avgSessionWinrate}% winrate and ${avgGamesPerSession} game${avgGamesPerSession !== 1 ? "s" : ""} per session.`;
+
+  return {
+    sessions,
+    avgSessionWinrate,
+    avgGamesPerSession,
+    bestSession,
+    worstSession,
+    insight,
+  };
+}
+
+// --- Day of Week ---
+
+const SHORT_DAY_NAMES = [
+  "Sun",
+  "Mon",
+  "Tue",
+  "Wed",
+  "Thu",
+  "Fri",
+  "Sat",
+] as const;
+const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0] as const;
+
+type DayOfWeekEntry = {
+  day: string;
+  dayIndex: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  total: number;
+  winrate: number;
+};
+
+type DayOfWeekResult = {
+  data: DayOfWeekEntry[];
+  bestDay: string;
+  worstDay: string;
+  weekdayWinrate: number;
+  weekendWinrate: number;
+  insight: string;
+};
+
+function getDayOfWeekStats(matches: MatchData[]): DayOfWeekResult {
+  const counts = new Map<
+    number,
+    { wins: number; losses: number; draws: number }
+  >();
+
+  for (const match of matches) {
+    const day = match.playedAt.getDay();
+    const current = counts.get(day) ?? { wins: 0, losses: 0, draws: 0 };
+    if (match.result === "win") current.wins++;
+    else if (match.result === "loss") current.losses++;
+    else current.draws++;
+    counts.set(day, current);
+  }
+
+  const data: DayOfWeekEntry[] = DAY_ORDER.map((dayIndex) => {
+    const stats = counts.get(dayIndex) ?? { wins: 0, losses: 0, draws: 0 };
+    const total = stats.wins + stats.losses + stats.draws;
+    const winrate = total > 0 ? Math.round((stats.wins / total) * 100) : 0;
+    return {
+      day: SHORT_DAY_NAMES[dayIndex],
+      dayIndex,
+      ...stats,
+      total,
+      winrate,
+    };
+  });
+
+  const daysWithGames = data.filter((d) => d.total > 0);
+
+  let bestDay = "";
+  let worstDay = "";
+  if (daysWithGames.length > 0) {
+    bestDay = daysWithGames.reduce((best, d) =>
+      d.winrate > best.winrate ? d : best
+    ).day;
+    worstDay = daysWithGames.reduce((worst, d) =>
+      d.winrate < worst.winrate ? d : worst
+    ).day;
+  }
+
+  const weekdayEntries = data.filter((d) => d.dayIndex >= 1 && d.dayIndex <= 5);
+  const weekendEntries = data.filter(
+    (d) => d.dayIndex === 0 || d.dayIndex === 6
+  );
+
+  function weightedWinrate(entries: DayOfWeekEntry[]): number {
+    const totalWins = entries.reduce((sum, d) => sum + d.wins, 0);
+    const totalGames = entries.reduce((sum, d) => sum + d.total, 0);
+    return totalGames > 0 ? Math.round((totalWins / totalGames) * 100) : 0;
+  }
+
+  const weekdayWinrate = weightedWinrate(weekdayEntries);
+  const weekendWinrate = weightedWinrate(weekendEntries);
+
+  let insight: string;
+  if (daysWithGames.length === 0) {
+    insight = "No matches recorded yet.";
+  } else if (weekdayWinrate === weekendWinrate) {
+    insight = `You perform equally well on weekdays and weekends (${weekdayWinrate}%). Your best day is ${bestDay}.`;
+  } else {
+    const better = weekendWinrate > weekdayWinrate ? "weekends" : "weekdays";
+    const diff = Math.abs(weekendWinrate - weekdayWinrate);
+    insight = `You perform ${diff}% better on ${better}. Your strongest day is ${bestDay}.`;
+  }
+
+  return { data, bestDay, worstDay, weekdayWinrate, weekendWinrate, insight };
+}
+
 export {
-  filterMatchesByRole,
-  getMapWinLossData,
-  getGameModeDistribution,
-  getGameModeWinrates,
-  getMostPlayedHeroes,
-  getHeroWinrates,
-  getSummaryStats,
-  getRollingWinrateData,
-  getActivityHeatmapData,
-  getStreakData,
-  getRecentFormData,
-  getGroupSizeWinrates,
-  getRoleStats,
-  getOneTrickStats,
-  getHeroPoolDiversity,
-  getHeroSwapStats,
-  getMapDetailedStats,
-  getHeroMapSynergy,
-  getMapLearningCurve,
-  getMapFamiliarityData,
-  getRepeatMapData,
-  getMapTimelineData,
-  HERO_WINRATE_MIN_MATCHES,
   GROUP_SIZE_MIN_MATCHES,
-  ROLE_WINRATE_MIN_MATCHES,
-  SWAP_MIN_PERCENTAGE,
-  ONE_TRICK_THRESHOLD,
-  SPECIALIST_THRESHOLD,
   HERO_MAP_MIN_GAMES,
+  HERO_WINRATE_MIN_MATCHES,
   MAP_DETAILED_MIN_GAMES,
   MAP_LEARNING_MIN_GAMES,
+  ONE_TRICK_THRESHOLD,
+  ROLE_WINRATE_MIN_MATCHES,
+  SPECIALIST_THRESHOLD,
+  SWAP_MIN_PERCENTAGE,
+  filterMatchesByRole,
+  getActivityHeatmapData,
+  getDayOfWeekStats,
+  getGameModeDistribution,
+  getGameModeWinrates,
+  getGroupSizeWinrates,
+  getHeroMapSynergy,
+  getHeroPoolDiversity,
+  getHeroSwapStats,
+  getHeroWinrates,
+  getMapDetailedStats,
+  getMapFamiliarityData,
+  getMapLearningCurve,
+  getMapTimelineData,
+  getMapWinLossData,
+  getMostPlayedHeroes,
+  getOneTrickStats,
+  getRecentFormData,
+  getRepeatMapData,
+  getRoleStats,
+  getRollingWinrateData,
+  getSessionAnalysis,
+  getStreakData,
+  getSummaryStats,
 };
 
 export type {
-  MatchData,
-  MatchHeroData,
-  RoleFilter,
-  MapWinLossResult,
+  ActivityHeatmapResult,
+  BestHeroPerMap,
+  DayOfWeekEntry,
+  DayOfWeekResult,
   GameModeDistResult,
   GameModeWinrateResult,
-  MostPlayedHeroResult,
-  HeroWinrateResult,
-  SummaryStats,
-  RollingWinrateEntry,
-  RollingWinrateResult,
-  ActivityHeatmapResult,
-  RecentResult,
-  StreakData,
-  RecentFormData,
   GroupSizeEntry,
   GroupSizeInsight,
   GroupSizeResult,
-  RoleDistEntry,
-  RoleWinrateEntry,
-  RoleFlexibilityData,
-  RoleStatsInsight,
-  RoleStatsResult,
-  OneTrickResult,
+  HeroMapCell,
+  HeroMapSynergyResult,
   HeroPoolDiversityResult,
   HeroSwapEntry,
   HeroSwapResult,
+  HeroWinrateResult,
   MapDetailedEntry,
   MapDetailedResult,
-  HeroMapCell,
-  BestHeroPerMap,
-  HeroMapSynergyResult,
-  MapLearningEntry,
-  MapLearningResult,
   MapFamiliarityEntry,
   MapFamiliarityResult,
-  RepeatMapResult,
+  MapLearningEntry,
+  MapLearningResult,
   MapTimelineEntry,
   MapTimelineMapData,
   MapTimelineResult,
+  MapWinLossResult,
+  MatchData,
+  MatchHeroData,
+  MostPlayedHeroResult,
+  OneTrickResult,
+  RecentFormData,
+  RecentResult,
+  RepeatMapResult,
+  RoleDistEntry,
+  RoleFilter,
+  RoleFlexibilityData,
+  RoleStatsInsight,
+  RoleStatsResult,
+  RoleWinrateEntry,
+  RollingWinrateEntry,
+  RollingWinrateResult,
+  SessionAnalysisResult,
+  SessionEntry,
+  StreakData,
+  SummaryStats,
 };
