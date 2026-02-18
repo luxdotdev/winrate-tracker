@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
-import AuroraBlur from "@/components/react-bits/aurora-blur";
-import StaggeredText from "@/components/react-bits/staggered-text";
 import AnimatedList, {
   type AnimatedListItem,
 } from "@/components/react-bits/animated-list";
+import AuroraBlur from "@/components/react-bits/aurora-blur";
+import StaggeredText from "@/components/react-bits/staggered-text";
+import { Button } from "@/components/ui/button";
 import {
   ArrowRight,
   BarChart3,
@@ -113,6 +113,9 @@ const auroraSkyLayers = [
 ];
 
 export function LandingPage() {
+  const currentYear = new Date().getFullYear();
+  const copyrightYear = currentYear === 2026 ? "2026" : `2026–${currentYear}`;
+
   return (
     <div className="bg-background">
       <main>
@@ -139,17 +142,17 @@ export function LandingPage() {
             className="pointer-events-none absolute inset-0 -z-10 block dark:hidden"
             aria-hidden="true"
           >
-            <div className="absolute inset-0 bg-linear-to-b from-primary/6 via-primary/3 to-transparent" />
-            <div className="absolute top-0 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-primary/8 blur-[100px]" />
+            <div className="from-primary/6 via-primary/3 absolute inset-0 bg-linear-to-b to-transparent" />
+            <div className="bg-primary/8 absolute top-0 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full blur-[100px]" />
           </div>
 
           {/* Navbar */}
           <header className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 pt-6 lg:px-8">
             <Link href="/" className="flex items-center gap-2">
-              <BarChart3 className="h-7 w-7 text-primary" aria-hidden="true" />
-              <span className="text-lg font-bold tracking-tight text-foreground">
+              <BarChart3 className="text-primary h-7 w-7" aria-hidden="true" />
+              <span className="text-foreground text-lg font-bold tracking-tight">
                 lux.dev{" "}
-                <span className="font-normal text-muted-foreground">/</span>{" "}
+                <span className="text-muted-foreground font-normal">/</span>{" "}
                 <span className="text-primary">winrate</span>
               </span>
             </Link>
@@ -165,35 +168,32 @@ export function LandingPage() {
             <div className="mb-8 flex justify-center">
               <Link
                 href="#features"
-                className="inline-flex items-center gap-x-3 rounded-full border border-border bg-card/60 px-4 py-1.5 text-sm backdrop-blur-sm"
+                className="border-border bg-card/60 inline-flex items-center gap-x-3 rounded-full border px-4 py-1.5 text-sm backdrop-blur-sm"
               >
-                <span className="font-semibold text-primary">
+                <span className="text-primary font-semibold">
                   2026 S1 Ready
                 </span>
-                <span className="h-4 w-px bg-border" aria-hidden="true" />
-                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                <span className="bg-border h-4 w-px" aria-hidden="true" />
+                <span className="text-muted-foreground inline-flex items-center gap-1">
                   Track every map
-                  <ChevronRight
-                    className="h-3.5 w-3.5"
-                    aria-hidden="true"
-                  />
+                  <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                 </span>
               </Link>
             </div>
             <StaggeredText
               text="Know your maps. Win more games."
               as="h1"
-              className="justify-center text-4xl font-bold tracking-tight text-foreground sm:text-6xl"
+              className="text-foreground justify-center text-4xl font-bold tracking-tight sm:text-6xl"
               segmentBy="words"
               direction="top"
               blur
               duration={0.5}
               delay={60}
             />
-            <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-              The simple way to track your ranked Overwatch winrates by map.
-              Log your competitive games, spot your strongest maps, and climb
-              with confidence.
+            <p className="text-muted-foreground mx-auto mt-6 max-w-2xl text-lg leading-8">
+              The simple way to track your ranked Overwatch winrates by map. Log
+              your competitive games, spot your strongest maps, and climb with
+              confidence.
             </p>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Button asChild size="lg">
@@ -203,7 +203,7 @@ export function LandingPage() {
                 href="https://github.com/lucasdoell/winrate-tracker"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-sm font-semibold leading-6 text-foreground"
+                className="text-foreground text-sm leading-6 font-semibold"
               >
                 View on GitHub <span aria-hidden="true">&rarr;</span>
               </Link>
@@ -212,18 +212,18 @@ export function LandingPage() {
 
           {/* Preview card with Animated List */}
           <div className="mx-auto mt-16 max-w-xl px-6 sm:mt-20 lg:px-8">
-            <div className="rounded-xl border border-border bg-card/80 shadow-xl shadow-primary/5 backdrop-blur-sm">
+            <div className="border-border bg-card/80 shadow-primary/5 rounded-xl border shadow-xl backdrop-blur-sm">
               <div className="p-6 sm:p-8">
                 <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-card-foreground">
+                    <h3 className="text-card-foreground text-lg font-semibold">
                       Map Winrates &mdash; 2026 S1
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       Competitive &middot; All Roles
                     </p>
                   </div>
-                  <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary ring-1 ring-inset ring-primary/20">
+                  <span className="bg-primary/10 text-primary ring-primary/20 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset">
                     47 matches played
                   </span>
                 </div>
@@ -247,7 +247,7 @@ export function LandingPage() {
 
           {/* Gradient fade into features */}
           <div
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent to-background sm:h-48"
+            className="to-background pointer-events-none absolute inset-x-0 bottom-0 h-32 bg-linear-to-b from-transparent sm:h-48"
             aria-hidden="true"
           />
         </section>
@@ -258,16 +258,16 @@ export function LandingPage() {
           className="mx-auto mt-24 max-w-7xl px-6 sm:mt-32 lg:px-8"
         >
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-base font-semibold leading-7 text-primary">
+            <h2 className="text-primary text-base leading-7 font-semibold">
               Built for ranked
             </h2>
             <p
-              className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+              className="text-foreground mt-2 text-3xl font-bold tracking-tight sm:text-4xl"
               style={{ textWrap: "balance" }}
             >
               Everything you need to climb
             </p>
-            <p className="mt-6 text-lg leading-8 text-muted-foreground">
+            <p className="text-muted-foreground mt-6 text-lg leading-8">
               Stop guessing which maps are dragging your SR down. Get clear,
               actionable data on your ranked performance across every map in the
               competitive rotation.
@@ -277,18 +277,18 @@ export function LandingPage() {
             {features.map((feature) => (
               <div
                 key={feature.name}
-                className="rounded-xl border border-border bg-card p-8"
+                className="border-border bg-card rounded-xl border p-8"
               >
-                <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <div className="bg-primary/10 mb-4 flex h-10 w-10 items-center justify-center rounded-lg">
                   <feature.icon
-                    className="h-5 w-5 text-primary"
+                    className="text-primary h-5 w-5"
                     aria-hidden="true"
                   />
                 </div>
-                <h3 className="text-base font-semibold leading-7 text-foreground">
+                <h3 className="text-foreground text-base leading-7 font-semibold">
                   {feature.name}
                 </h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                <p className="text-muted-foreground mt-2 text-sm leading-6">
                   {feature.description}
                 </p>
               </div>
@@ -299,11 +299,11 @@ export function LandingPage() {
         {/* How it works — timeline steps */}
         <section className="mx-auto mt-24 max-w-7xl px-6 sm:mt-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-base font-semibold leading-7 text-primary">
+            <h2 className="text-primary text-base leading-7 font-semibold">
               Simple setup
             </h2>
             <p
-              className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+              className="text-foreground mt-2 text-3xl font-bold tracking-tight sm:text-4xl"
               style={{ textWrap: "balance" }}
             >
               Up and running in minutes
@@ -311,7 +311,7 @@ export function LandingPage() {
           </div>
           <div className="relative mx-auto mt-16 max-w-3xl sm:mt-20">
             <div
-              className="absolute top-5 right-10 left-10 hidden h-px bg-border sm:block"
+              className="bg-border absolute top-5 right-10 left-10 hidden h-px sm:block"
               aria-hidden="true"
             />
             <div className="grid grid-cols-1 gap-12 sm:grid-cols-3 sm:gap-0">
@@ -320,16 +320,16 @@ export function LandingPage() {
                   key={step.name}
                   className="relative flex flex-col items-center text-center"
                 >
-                  <div className="relative z-10 flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <div className="bg-primary text-primary-foreground relative z-10 flex h-10 w-10 items-center justify-center rounded-full">
                     <step.icon className="h-5 w-5" aria-hidden="true" />
                   </div>
-                  <span className="mt-4 font-mono text-xs text-muted-foreground">
+                  <span className="text-muted-foreground mt-4 font-mono text-xs">
                     {String(idx + 1).padStart(2, "0")}
                   </span>
-                  <h3 className="mt-1 text-sm font-semibold text-foreground">
+                  <h3 className="text-foreground mt-1 text-sm font-semibold">
                     {step.name}
                   </h3>
-                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  <p className="text-muted-foreground mt-2 text-sm leading-6">
                     {step.description}
                   </p>
                 </div>
@@ -341,11 +341,11 @@ export function LandingPage() {
         {/* Stats — centered cards */}
         <section className="mx-auto mt-24 max-w-7xl px-6 sm:mt-32 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-base font-semibold leading-7 text-primary">
+            <h2 className="text-primary text-base leading-7 font-semibold">
               Comprehensive coverage
             </h2>
             <p
-              className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+              className="text-foreground mt-2 text-3xl font-bold tracking-tight sm:text-4xl"
               style={{ textWrap: "balance" }}
             >
               Built for the full competitive experience
@@ -355,12 +355,12 @@ export function LandingPage() {
             {stats.map((stat) => (
               <div
                 key={stat.name}
-                className="flex flex-col items-center rounded-xl border border-border bg-card px-6 py-8 text-center"
+                className="border-border bg-card flex flex-col items-center rounded-xl border px-6 py-8 text-center"
               >
-                <dd className="font-mono text-3xl font-semibold tracking-tight text-foreground tabular-nums">
+                <dd className="text-foreground font-mono text-3xl font-semibold tracking-tight tabular-nums">
                   {stat.value}
                 </dd>
-                <dt className="mt-1 text-sm text-muted-foreground">
+                <dt className="text-muted-foreground mt-1 text-sm">
                   {stat.name}
                 </dt>
               </div>
@@ -370,22 +370,22 @@ export function LandingPage() {
 
         {/* Parsertime cross-promotion */}
         <section className="mx-auto mt-24 max-w-7xl px-6 sm:mt-32 lg:px-8">
-          <div className="rounded-2xl border border-border bg-card/50 p-8 sm:p-12">
+          <div className="border-border bg-card/50 rounded-2xl border p-8 sm:p-12">
             <div className="flex flex-col items-center gap-8 lg:flex-row lg:items-start lg:gap-12">
-              <div className="shrink-0 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+              <div className="bg-primary/10 flex h-14 w-14 shrink-0 items-center justify-center rounded-xl">
                 <BarChart3
-                  className="h-7 w-7 text-primary"
+                  className="text-primary h-7 w-7"
                   aria-hidden="true"
                 />
               </div>
               <div className="flex-1 text-center lg:text-left">
-                <h2 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+                <h2 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
                   Need more than ranked tracking?
                 </h2>
-                <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-                  Winrate Tracker is purpose-built for ranked play. If you&apos;re
-                  looking for in-depth scrim analytics, team performance
-                  breakdowns, and detailed match replay stats,{" "}
+                <p className="text-muted-foreground mt-3 max-w-2xl text-base leading-7">
+                  Winrate Tracker is purpose-built for ranked play. If
+                  you&apos;re looking for in-depth scrim analytics, team
+                  performance breakdowns, and detailed match replay stats,{" "}
                   <strong className="text-foreground">Parsertime</strong> is our
                   sister project designed for exactly that.
                 </p>
@@ -393,7 +393,7 @@ export function LandingPage() {
                   href="https://parsertime.app"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+                  className="text-primary hover:text-primary/80 mt-6 inline-flex items-center gap-2 text-sm font-semibold transition-colors"
                 >
                   Explore Parsertime
                   <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -405,7 +405,7 @@ export function LandingPage() {
 
         {/* CTA — card with Aurora Blur */}
         <section className="mx-auto mt-24 max-w-7xl px-6 sm:mt-32 lg:px-8">
-          <div className="relative isolate overflow-hidden rounded-2xl ring-1 ring-border">
+          <div className="ring-border relative isolate overflow-hidden rounded-2xl ring-1">
             {/* Dark mode: Aurora Blur */}
             <div className="pointer-events-none absolute inset-0 -z-10 hidden dark:block">
               <AuroraBlur
@@ -435,17 +435,17 @@ export function LandingPage() {
               className="pointer-events-none absolute inset-0 -z-10 block dark:hidden"
               aria-hidden="true"
             >
-              <div className="absolute inset-0 bg-linear-to-br from-primary/8 via-primary/4 to-[#80caff]/6" />
-              <div className="absolute top-1/2 left-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/6 blur-[80px]" />
+              <div className="from-primary/8 via-primary/4 absolute inset-0 bg-linear-to-br to-[#80caff]/6" />
+              <div className="bg-primary/6 absolute top-1/2 left-1/2 h-80 w-80 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[80px]" />
             </div>
             <div className="relative px-6 py-20 text-center sm:px-16 sm:py-24">
               <h2
-                className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl"
+                className="text-foreground text-3xl font-bold tracking-tight sm:text-4xl"
                 style={{ textWrap: "balance" }}
               >
                 Start climbing today
               </h2>
-              <p className="mx-auto mt-4 max-w-xl text-lg leading-8 text-muted-foreground">
+              <p className="text-muted-foreground mx-auto mt-4 max-w-xl text-lg leading-8">
                 Log your ranked games, track your map winrates, and make
                 data-driven decisions to push your SR higher. Free and open
                 source.
@@ -458,7 +458,7 @@ export function LandingPage() {
                   href="https://github.com/lucasdoell/winrate-tracker"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-sm font-semibold leading-6 text-foreground"
+                  className="text-foreground text-sm leading-6 font-semibold"
                 >
                   View on GitHub <span aria-hidden="true">&rarr;</span>
                 </Link>
@@ -474,17 +474,16 @@ export function LandingPage() {
           Footer
         </h2>
         <div className="mx-auto max-w-7xl px-6 pt-12 pb-8 lg:px-8">
-          <div className="flex items-center justify-between border-t border-border pt-8">
-            <p className="text-xs leading-5 text-muted-foreground">
-              &copy; 2025&ndash;{new Date().getFullYear()} lux.dev. All rights
-              reserved.
+          <div className="border-border flex items-center justify-between border-t pt-8">
+            <p className="text-muted-foreground text-xs leading-5">
+              &copy; {copyrightYear} lux.dev. All rights reserved.
             </p>
             <div className="flex gap-x-6">
               <Link
                 href="https://github.com/lucasdoell"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span className="sr-only">GitHub</span>
                 <svg
@@ -504,7 +503,7 @@ export function LandingPage() {
                 href="https://bsky.app/profile/lux.dev"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span className="sr-only">Bluesky</span>
                 <svg
@@ -520,7 +519,7 @@ export function LandingPage() {
                 href="https://twitter.com/luxdotdev"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground transition-colors hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground transition-colors"
               >
                 <span className="sr-only">X</span>
                 <svg
