@@ -1,5 +1,5 @@
+import { DashboardContent } from "@/components/dashboard/dashboard-content";
 import { MatchForm } from "@/components/dashboard/match-form";
-import { MatchList } from "@/components/dashboard/match-list";
 import { Button } from "@/components/ui/button";
 import {
   Empty,
@@ -57,22 +57,5 @@ export default async function DashboardPage() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold tracking-tight text-balance">
-          Dashboard
-        </h2>
-        <MatchForm
-          trigger={
-            <Button className="active:scale-[0.97]">
-              <Plus className="mr-1.5 size-4" />
-              Track match
-            </Button>
-          }
-        />
-      </div>
-      <MatchList matches={matches} />
-    </div>
-  );
+  return <DashboardContent matches={matches} />;
 }
