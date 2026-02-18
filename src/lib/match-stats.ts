@@ -899,6 +899,210 @@ function getRoleStats(matches: MatchData[]): RoleStatsResult {
   };
 }
 
+// --- One-Trick Detection ---
+
+const ONE_TRICK_THRESHOLD = 40;
+const SPECIALIST_THRESHOLD = 25;
+
+type OneTrickResult = {
+  topHero: string;
+  topHeroRole: string;
+  topHeroPct: number;
+  label: "One-Trick" | "Specialist" | "Diverse";
+  description: string;
+  topHeroesData: { hero: string; pct: number; role: string }[];
+};
+
+function getOneTrickStats(matches: MatchData[]): OneTrickResult {
+  const totalMatches = matches.length;
+
+  if (totalMatches === 0) {
+    return {
+      topHero: "",
+      topHeroRole: "",
+      topHeroPct: 0,
+      label: "Diverse",
+      description: "No matches tracked yet",
+      topHeroesData: [],
+    };
+  }
+
+  const heroWeights = new Map<string, { weight: number; role: string }>();
+
+  for (const match of matches) {
+    for (const hero of match.heroes) {
+      const current = heroWeights.get(hero.hero) ?? { weight: 0, role: hero.role };
+      current.weight += hero.percentage;
+      heroWeights.set(hero.hero, current);
+    }
+  }
+
+  const topHeroesData = Array.from(heroWeights.entries())
+    .map(([hero, { weight, role }]) => ({
+      hero,
+      pct: Math.round((weight / (totalMatches * 100)) * 1000) / 10,
+      role,
+    }))
+    .sort((a, b) => b.pct - a.pct)
+    .slice(0, 5);
+
+  const top = topHeroesData[0];
+  const topHeroPct = top?.pct ?? 0;
+
+  const label =
+    topHeroPct >= ONE_TRICK_THRESHOLD
+      ? "One-Trick"
+      : topHeroPct >= SPECIALIST_THRESHOLD
+        ? "Specialist"
+        : "Diverse";
+
+  const description =
+    label === "One-Trick"
+      ? `You've spent ${topHeroPct}% of your time on ${top?.hero} — a dedicated one-trick`
+      : label === "Specialist"
+        ? `You lean toward ${top?.hero} but still have some variety`
+        : top?.hero
+          ? `Your playtime is spread across many heroes`
+          : "No matches tracked yet";
+
+  return {
+    topHero: top?.hero ?? "",
+    topHeroRole: top?.role ?? "",
+    topHeroPct,
+    label,
+    description,
+    topHeroesData,
+  };
+}
+
+// --- Hero Pool Diversity ---
+
+type HeroPoolDiversityResult = {
+  totalUnique: number;
+  byRole: { role: string; count: number; fill: string }[];
+  heroList: { hero: string; role: string }[];
+};
+
+function getHeroPoolDiversity(matches: MatchData[]): HeroPoolDiversityResult {
+  const seen = new Map<string, string>();
+
+  for (const match of matches) {
+    for (const hero of match.heroes) {
+      if (!seen.has(hero.hero)) {
+        seen.set(hero.hero, hero.role);
+      }
+    }
+  }
+
+  const heroList = Array.from(seen.entries())
+    .map(([hero, role]) => ({ hero, role }))
+    .sort((a, b) => a.hero.localeCompare(b.hero));
+
+  const roleCounts = new Map<string, number>(ROLES.map((r) => [r, 0]));
+  for (const { role } of heroList) {
+    if (ROLES.includes(role as (typeof ROLES)[number])) {
+      roleCounts.set(role, (roleCounts.get(role) ?? 0) + 1);
+    }
+  }
+
+  const byRole = ROLES.map((role) => ({
+    role,
+    count: roleCounts.get(role) ?? 0,
+    fill: ROLE_COLORS[role] ?? "var(--chart-1)",
+  }));
+
+  return {
+    totalUnique: seen.size,
+    byRole,
+    heroList,
+  };
+}
+
+// --- Hero Swap Analytics ---
+
+const SWAP_MIN_PERCENTAGE = 20;
+
+type HeroSwapEntry = {
+  label: "Swapped" | "Stayed";
+  winrate: number;
+  wins: number;
+  total: number;
+};
+
+type HeroSwapResult = {
+  data: HeroSwapEntry[];
+  swapWinrate: number;
+  noSwapWinrate: number;
+  swapTotal: number;
+  noSwapTotal: number;
+  delta: number;
+  avgHeroesPerSwapMatch: number;
+  insight: string;
+};
+
+function getHeroSwapStats(matches: MatchData[]): HeroSwapResult {
+  let swapWins = 0;
+  let swapTotal = 0;
+  let noSwapWins = 0;
+  let noSwapTotal = 0;
+  let totalSignificantHeroesInSwapMatches = 0;
+
+  for (const match of matches) {
+    const significantHeroes = match.heroes.filter(
+      (h) => h.percentage >= SWAP_MIN_PERCENTAGE
+    );
+    const isSwap = significantHeroes.length >= 2;
+
+    if (isSwap) {
+      swapTotal++;
+      totalSignificantHeroesInSwapMatches += significantHeroes.length;
+      if (match.result === "win") swapWins++;
+    } else {
+      noSwapTotal++;
+      if (match.result === "win") noSwapWins++;
+    }
+  }
+
+  const swapWinrate =
+    swapTotal > 0 ? Math.round((swapWins / swapTotal) * 1000) / 10 : 0;
+  const noSwapWinrate =
+    noSwapTotal > 0 ? Math.round((noSwapWins / noSwapTotal) * 1000) / 10 : 0;
+  const delta = Math.round((swapWinrate - noSwapWinrate) * 10) / 10;
+  const avgHeroesPerSwapMatch =
+    swapTotal > 0
+      ? Math.round((totalSignificantHeroesInSwapMatches / swapTotal) * 10) / 10
+      : 0;
+
+  const hasEnoughData = swapTotal >= 3 && noSwapTotal >= 3;
+
+  let insight: string;
+  if (!hasEnoughData) {
+    insight = "Not enough data yet — play more matches to see swap correlation";
+  } else if (Math.abs(delta) < 2) {
+    insight = "Swapping heroes has no meaningful impact on your winrate";
+  } else if (delta > 0) {
+    insight = `Swapping heroes gives you a +${delta}% winrate boost`;
+  } else {
+    insight = `Staying on your hero gives you a +${Math.abs(delta)}% winrate advantage`;
+  }
+
+  const data: HeroSwapEntry[] = [
+    { label: "Swapped", winrate: swapWinrate, wins: swapWins, total: swapTotal },
+    { label: "Stayed", winrate: noSwapWinrate, wins: noSwapWins, total: noSwapTotal },
+  ];
+
+  return {
+    data,
+    swapWinrate,
+    noSwapWinrate,
+    swapTotal,
+    noSwapTotal,
+    delta,
+    avgHeroesPerSwapMatch,
+    insight,
+  };
+}
+
 export {
   filterMatchesByRole,
   getMapWinLossData,
@@ -913,9 +1117,15 @@ export {
   getRecentFormData,
   getGroupSizeWinrates,
   getRoleStats,
+  getOneTrickStats,
+  getHeroPoolDiversity,
+  getHeroSwapStats,
   HERO_WINRATE_MIN_MATCHES,
   GROUP_SIZE_MIN_MATCHES,
   ROLE_WINRATE_MIN_MATCHES,
+  SWAP_MIN_PERCENTAGE,
+  ONE_TRICK_THRESHOLD,
+  SPECIALIST_THRESHOLD,
 };
 
 export type {
@@ -942,4 +1152,8 @@ export type {
   RoleFlexibilityData,
   RoleStatsInsight,
   RoleStatsResult,
+  OneTrickResult,
+  HeroPoolDiversityResult,
+  HeroSwapEntry,
+  HeroSwapResult,
 };
