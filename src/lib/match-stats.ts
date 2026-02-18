@@ -738,6 +738,167 @@ function getGroupSizeWinrates(matches: MatchData[]): GroupSizeResult {
   };
 }
 
+// --- Role Stats ---
+
+const ROLE_COLORS: Record<string, string> = {
+  Tank: "oklch(0.65 0.18 250)",
+  Damage: "oklch(0.65 0.18 25)",
+  Support: "oklch(0.65 0.18 160)",
+};
+
+const ROLES = ["Tank", "Damage", "Support"] as const;
+
+type RoleDistEntry = {
+  role: string;
+  weightedCount: number;
+  percentage: number;
+  fill: string;
+};
+
+type RoleWinrateEntry = {
+  role: string;
+  winrate: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  total: number;
+  fill: string;
+};
+
+type RoleFlexibilityData = {
+  score: number;
+  label: "Adaptive" | "Flexible" | "Specialist";
+  description: string;
+};
+
+type RoleStatsInsight = {
+  dominantRole: string;
+  dominantPct: number;
+  bestRole: string;
+  bestWinrate: number;
+  hasEnoughData: boolean;
+};
+
+type RoleStatsResult = {
+  distribution: RoleDistEntry[];
+  winrates: RoleWinrateEntry[];
+  flexibility: RoleFlexibilityData;
+  insight: RoleStatsInsight;
+};
+
+const ROLE_WINRATE_MIN_MATCHES = 3;
+
+function getRoleStats(matches: MatchData[]): RoleStatsResult {
+  const weightedCounts = new Map<string, number>(ROLES.map((r) => [r, 0]));
+  const winrateBuckets = new Map<
+    string,
+    { wins: number; losses: number; draws: number }
+  >(ROLES.map((r) => [r, { wins: 0, losses: 0, draws: 0 }]));
+
+  for (const match of matches) {
+    const totalPct = match.heroes.reduce((sum, h) => sum + h.percentage, 0);
+    const normalizer = totalPct > 0 ? totalPct : 1;
+
+    for (const hero of match.heroes) {
+      const role = hero.role;
+      if (!ROLES.includes(role as (typeof ROLES)[number])) continue;
+      const weight = hero.percentage / normalizer;
+      weightedCounts.set(role, (weightedCounts.get(role) ?? 0) + weight);
+    }
+
+    const rolesInMatch = new Set(match.heroes.map((h) => h.role));
+    for (const role of rolesInMatch) {
+      if (!ROLES.includes(role as (typeof ROLES)[number])) continue;
+      const bucket = winrateBuckets.get(role)!;
+      if (match.result === "win") bucket.wins++;
+      else if (match.result === "loss") bucket.losses++;
+      else bucket.draws++;
+    }
+  }
+
+  const totalWeight = Array.from(weightedCounts.values()).reduce(
+    (s, v) => s + v,
+    0
+  );
+
+  const distribution: RoleDistEntry[] = ROLES.map((role) => {
+    const weightedCount = weightedCounts.get(role) ?? 0;
+    const percentage =
+      totalWeight > 0 ? Math.round((weightedCount / totalWeight) * 1000) / 10 : 0;
+    return {
+      role,
+      weightedCount,
+      percentage,
+      fill: ROLE_COLORS[role] ?? "var(--chart-1)",
+    };
+  }).sort((a, b) => b.weightedCount - a.weightedCount);
+
+  const winrates: RoleWinrateEntry[] = ROLES.map((role) => {
+    const bucket = winrateBuckets.get(role)!;
+    const total = bucket.wins + bucket.losses + bucket.draws;
+    const winrate =
+      total > 0 ? Math.round((bucket.wins / total) * 1000) / 10 : 0;
+    return {
+      role,
+      winrate,
+      wins: bucket.wins,
+      losses: bucket.losses,
+      draws: bucket.draws,
+      total,
+      fill: ROLE_COLORS[role] ?? "var(--chart-1)",
+    };
+  });
+
+  // Flexibility: normalized deviation from a perfectly even split (1/3 each)
+  // score = (1 - sum(|p_i - 1/3|) / (4/3)) * 100
+  // max deviation (all on one role): |1 - 1/3| + |0 - 1/3| + |0 - 1/3| = 4/3
+  const proportions = ROLES.map((role) => {
+    const entry = distribution.find((d) => d.role === role);
+    return entry ? entry.percentage / 100 : 0;
+  });
+  const deviation = proportions.reduce(
+    (sum, p) => sum + Math.abs(p - 1 / 3),
+    0
+  );
+  const flexScore = Math.round((1 - deviation / (4 / 3)) * 100);
+
+  const flexLabel =
+    flexScore >= 80 ? "Adaptive" : flexScore >= 55 ? "Flexible" : "Specialist";
+
+  const dominantEntry = distribution[0];
+  const flexDescription =
+    flexScore >= 80
+      ? "You play all three roles nearly equally — a true flex player"
+      : flexScore >= 55
+        ? `You lean toward ${dominantEntry?.role ?? "one role"} but still play others`
+        : `You mainly play ${dominantEntry?.role ?? "one role"} — a dedicated specialist`;
+
+  const qualifiedWinrates = winrates.filter(
+    (r) => r.total >= ROLE_WINRATE_MIN_MATCHES
+  );
+  const bestRoleEntry = qualifiedWinrates.reduce<RoleWinrateEntry | null>(
+    (best, r) => (!best || r.winrate > best.winrate ? r : best),
+    null
+  );
+
+  return {
+    distribution,
+    winrates,
+    flexibility: {
+      score: flexScore,
+      label: flexLabel,
+      description: flexDescription,
+    },
+    insight: {
+      dominantRole: dominantEntry?.role ?? "",
+      dominantPct: dominantEntry?.percentage ?? 0,
+      bestRole: bestRoleEntry?.role ?? "",
+      bestWinrate: bestRoleEntry?.winrate ?? 0,
+      hasEnoughData: qualifiedWinrates.length > 0,
+    },
+  };
+}
+
 export {
   filterMatchesByRole,
   getMapWinLossData,
@@ -751,8 +912,10 @@ export {
   getStreakData,
   getRecentFormData,
   getGroupSizeWinrates,
+  getRoleStats,
   HERO_WINRATE_MIN_MATCHES,
   GROUP_SIZE_MIN_MATCHES,
+  ROLE_WINRATE_MIN_MATCHES,
 };
 
 export type {
@@ -774,4 +937,9 @@ export type {
   GroupSizeEntry,
   GroupSizeInsight,
   GroupSizeResult,
+  RoleDistEntry,
+  RoleWinrateEntry,
+  RoleFlexibilityData,
+  RoleStatsInsight,
+  RoleStatsResult,
 };
