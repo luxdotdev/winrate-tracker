@@ -647,6 +647,97 @@ function getRecentFormData(
   return { recent, overall, delta, trend };
 }
 
+// --- Group Size ---
+
+const GROUP_SIZE_LABELS: Record<number, string> = {
+  1: "Solo",
+  2: "Duo",
+  3: "Trio",
+  4: "4-Stack",
+  5: "5-Stack",
+  6: "Full Stack",
+};
+
+const GROUP_SIZE_MIN_MATCHES = 3;
+
+type GroupSizeEntry = {
+  groupSize: number;
+  label: string;
+  wins: number;
+  losses: number;
+  draws: number;
+  total: number;
+  winrate: number;
+};
+
+type GroupSizeInsight = {
+  optimalSize: number;
+  optimalLabel: string;
+  optimalWinrate: number;
+  soloWinrate: number | null;
+  hasEnoughData: boolean;
+};
+
+type GroupSizeResult = {
+  data: GroupSizeEntry[];
+  insight: GroupSizeInsight;
+};
+
+function getGroupSizeWinrates(matches: MatchData[]): GroupSizeResult {
+  const buckets = new Map<number, { wins: number; losses: number; draws: number }>();
+
+  for (const match of matches) {
+    const size = match.groupSize;
+    const current = buckets.get(size) ?? { wins: 0, losses: 0, draws: 0 };
+    if (match.result === "win") current.wins++;
+    else if (match.result === "loss") current.losses++;
+    else current.draws++;
+    buckets.set(size, current);
+  }
+
+  const data: GroupSizeEntry[] = Array.from(buckets.entries())
+    .map(([groupSize, stats]) => {
+      const total = stats.wins + stats.losses + stats.draws;
+      const winrate =
+        total > 0
+          ? Math.round((stats.wins / total) * 1000) / 10
+          : 0;
+      return {
+        groupSize,
+        label: GROUP_SIZE_LABELS[groupSize] ?? `${groupSize}-Stack`,
+        ...stats,
+        total,
+        winrate,
+      };
+    })
+    .sort((a, b) => a.groupSize - b.groupSize);
+
+  const qualified = data.filter((e) => e.total >= GROUP_SIZE_MIN_MATCHES);
+  const hasEnoughData = qualified.length > 0;
+
+  let optimalEntry = qualified[0];
+  for (const entry of qualified) {
+    if (entry.winrate > optimalEntry.winrate) optimalEntry = entry;
+  }
+
+  const soloEntry = data.find((e) => e.groupSize === 1);
+  const soloWinrate =
+    soloEntry && soloEntry.total >= GROUP_SIZE_MIN_MATCHES
+      ? soloEntry.winrate
+      : null;
+
+  return {
+    data,
+    insight: {
+      optimalSize: optimalEntry?.groupSize ?? 1,
+      optimalLabel: optimalEntry?.label ?? "Solo",
+      optimalWinrate: optimalEntry?.winrate ?? 0,
+      soloWinrate,
+      hasEnoughData,
+    },
+  };
+}
+
 export {
   filterMatchesByRole,
   getMapWinLossData,
@@ -659,7 +750,9 @@ export {
   getActivityHeatmapData,
   getStreakData,
   getRecentFormData,
+  getGroupSizeWinrates,
   HERO_WINRATE_MIN_MATCHES,
+  GROUP_SIZE_MIN_MATCHES,
 };
 
 export type {
@@ -678,4 +771,7 @@ export type {
   RecentResult,
   StreakData,
   RecentFormData,
+  GroupSizeEntry,
+  GroupSizeInsight,
+  GroupSizeResult,
 };
