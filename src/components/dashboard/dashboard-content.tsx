@@ -16,6 +16,7 @@ import {
 import {
   filterMatchesByRole,
   getActivityHeatmapData,
+  getDayOfWeekStats,
   getGameModeDistribution,
   getGameModeWinrates,
   getGroupSizeWinrates,
@@ -34,6 +35,7 @@ import {
   getRepeatMapData,
   getRollingWinrateData,
   getRoleStats,
+  getSessionAnalysis,
   getStreakData,
   getSummaryStats,
   type MatchData,
@@ -141,6 +143,14 @@ export function DashboardContent({ matches }: DashboardContentProps) {
     () => getMapTimelineData(filteredMatches),
     [filteredMatches]
   );
+  const sessionAnalysis = useMemo(
+    () => getSessionAnalysis(filteredMatches),
+    [filteredMatches]
+  );
+  const dayOfWeekStats = useMemo(
+    () => getDayOfWeekStats(filteredMatches),
+    [filteredMatches]
+  );
 
   return (
     <div className="space-y-6">
@@ -200,6 +210,8 @@ export function DashboardContent({ matches }: DashboardContentProps) {
         mapFamiliarity={mapFamiliarity}
         repeatMapData={repeatMapData}
         mapTimeline={mapTimeline}
+        sessionAnalysis={sessionAnalysis}
+        dayOfWeekStats={dayOfWeekStats}
       />
 
       <MatchList matches={filteredMatches} />
