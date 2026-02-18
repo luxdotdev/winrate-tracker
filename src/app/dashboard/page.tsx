@@ -60,7 +60,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-balance text-xl font-semibold tracking-tight">
+        <h2 className="text-xl font-semibold tracking-tight text-balance">
           Dashboard
         </h2>
         <MatchForm
