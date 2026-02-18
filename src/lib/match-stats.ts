@@ -15,6 +15,7 @@ type MatchData = {
   result: string;
   groupSize: number;
   playedAt: Date;
+  createdAt: Date;
   heroes: MatchHeroData[];
 };
 
