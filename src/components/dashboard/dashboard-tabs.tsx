@@ -3,6 +3,8 @@
 import { ActivityHeatmap } from "@/components/dashboard/charts/activity-heatmap";
 import { GameModeDistributionChart } from "@/components/dashboard/charts/game-mode-distribution-chart";
 import { GameModeWinrateChart } from "@/components/dashboard/charts/game-mode-winrate-chart";
+import { GroupSizeBreakdownChart } from "@/components/dashboard/charts/group-size-breakdown-chart";
+import { GroupSizeWinrateChart } from "@/components/dashboard/charts/group-size-winrate-chart";
 import { HeroWinrateChart } from "@/components/dashboard/charts/hero-winrate-chart";
 import { MapWinLossChart } from "@/components/dashboard/charts/map-win-loss-chart";
 import { MostPlayedHeroesChart } from "@/components/dashboard/charts/most-played-heroes-chart";
@@ -14,6 +16,7 @@ import type {
   ActivityHeatmapResult,
   GameModeDistResult,
   GameModeWinrateResult,
+  GroupSizeResult,
   HeroWinrateResult,
   MapWinLossResult,
   MatchData,
@@ -42,6 +45,7 @@ type DashboardTabsProps = {
   activityHeatmap: ActivityHeatmapResult;
   streakData: StreakData;
   recentForm: RecentFormData;
+  groupSizeWinrates: GroupSizeResult;
 };
 
 function PlaceholderTab({
@@ -72,6 +76,7 @@ export function DashboardTabs({
   activityHeatmap,
   streakData,
   recentForm,
+  groupSizeWinrates,
 }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview">
@@ -92,7 +97,7 @@ export function DashboardTabs({
           <Clock className="size-4" aria-hidden="true" />
           Time
         </TabsTrigger>
-        <TabsTrigger value="groups" disabled>
+        <TabsTrigger value="groups">
           <Users className="size-4" aria-hidden="true" />
           Groups
         </TabsTrigger>
@@ -136,11 +141,11 @@ export function DashboardTabs({
         <RecentFormChart data={recentForm} />
       </TabsContent>
 
-      <TabsContent value="groups">
-        <PlaceholderTab
-          title="Group Size Analysis coming soon"
-          description="Compare your performance solo vs. grouped, and find your optimal group size."
-        />
+      <TabsContent value="groups" className="space-y-4 pt-4">
+        <div className="grid gap-4 md:grid-cols-2">
+          <GroupSizeWinrateChart result={groupSizeWinrates} />
+          <GroupSizeBreakdownChart result={groupSizeWinrates} />
+        </div>
       </TabsContent>
 
       <TabsContent value="roles">
