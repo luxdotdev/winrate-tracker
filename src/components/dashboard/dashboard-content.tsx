@@ -19,9 +19,12 @@ import {
   getGameModeDistribution,
   getGameModeWinrates,
   getGroupSizeWinrates,
+  getHeroPoolDiversity,
+  getHeroSwapStats,
   getHeroWinrates,
   getMapWinLossData,
   getMostPlayedHeroes,
+  getOneTrickStats,
   getRecentFormData,
   getRollingWinrateData,
   getRoleStats,
@@ -96,6 +99,18 @@ export function DashboardContent({ matches }: DashboardContentProps) {
     [filteredMatches]
   );
   const roleStats = useMemo(() => getRoleStats(matches), [matches]);
+  const oneTrick = useMemo(
+    () => getOneTrickStats(filteredMatches),
+    [filteredMatches]
+  );
+  const heroPoolDiversity = useMemo(
+    () => getHeroPoolDiversity(filteredMatches),
+    [filteredMatches]
+  );
+  const heroSwapStats = useMemo(
+    () => getHeroSwapStats(filteredMatches),
+    [filteredMatches]
+  );
 
   return (
     <div className="space-y-6">
@@ -146,6 +161,9 @@ export function DashboardContent({ matches }: DashboardContentProps) {
         recentForm={recentForm}
         groupSizeWinrates={groupSizeWinrates}
         roleStats={roleStats}
+        oneTrick={oneTrick}
+        heroPoolDiversity={heroPoolDiversity}
+        heroSwapStats={heroSwapStats}
       />
 
       <MatchList matches={filteredMatches} />
