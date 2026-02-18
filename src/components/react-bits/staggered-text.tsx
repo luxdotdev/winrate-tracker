@@ -78,7 +78,7 @@ export interface StaggeredTextProps {
  */
 const buildKeyframes = (
   from: MotionStyle,
-  steps: MotionStyle[],
+  steps: MotionStyle[]
 ): Record<string, Array<string | number>> => {
   const keys = new Set<string>([
     ...Object.keys(from),
@@ -116,7 +116,7 @@ const StaggeredText = forwardRef<StaggeredTextHandle, StaggeredTextProps>(
       onAnimationComplete,
       onExitComplete,
     },
-    ref,
+    ref
   ) => {
     const rootRef = useRef<HTMLElement | null>(null);
 
@@ -167,7 +167,7 @@ const StaggeredText = forwardRef<StaggeredTextHandle, StaggeredTextProps>(
             setIsExiting(true);
           }
         },
-        { threshold, rootMargin },
+        { threshold, rootMargin }
       );
 
       observer.observe(rootRef.current);
@@ -223,7 +223,7 @@ const StaggeredText = forwardRef<StaggeredTextHandle, StaggeredTextProps>(
 
     const fromSnapshot = useMemo<MotionStyle>(
       () => from ?? defaultFrom,
-      [from, defaultFrom],
+      [from, defaultFrom]
     );
 
     const toSnapshots = useMemo<MotionStyle[]>(() => {
@@ -235,9 +235,9 @@ const StaggeredText = forwardRef<StaggeredTextHandle, StaggeredTextProps>(
     const times = useMemo(
       () =>
         Array.from({ length: stepCount }, (_, i) =>
-          stepCount === 1 ? 0 : i / (stepCount - 1),
+          stepCount === 1 ? 0 : i / (stepCount - 1)
         ),
-      [stepCount],
+      [stepCount]
     );
 
     const { rowsSegments, totalSegments } = useMemo(() => {
@@ -264,7 +264,7 @@ const StaggeredText = forwardRef<StaggeredTextHandle, StaggeredTextProps>(
 
       const total = rowsSegments.reduce(
         (sum, rowSegs) => sum + rowSegs.length,
-        0,
+        0
       );
 
       return { rowsSegments, totalSegments: total };
@@ -366,7 +366,7 @@ const StaggeredText = forwardRef<StaggeredTextHandle, StaggeredTextProps>(
         ))}
       </Wrapper>
     );
-  },
+  }
 );
 
 StaggeredText.displayName = "StaggeredText";

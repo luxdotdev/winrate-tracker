@@ -37,13 +37,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  CalendarIcon,
-  ChevronsUpDown,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CalendarIcon, ChevronsUpDown, Plus, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
 
@@ -308,9 +302,7 @@ function MatchEntryCard({
   return (
     <fieldset className="border-border space-y-4 rounded-lg border p-4">
       <div className="flex items-center justify-between">
-        <legend className="text-sm font-medium">
-          Match {matchIndex + 1}
-        </legend>
+        <legend className="text-sm font-medium">Match {matchIndex + 1}</legend>
         {totalMatches > 1 && (
           <Button
             type="button"
@@ -325,10 +317,7 @@ function MatchEntryCard({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <MapPicker
-          value={match.map}
-          onChange={(map) => onUpdate({ map })}
-        />
+        <MapPicker value={match.map} onChange={(map) => onUpdate({ map })} />
         <DatePicker
           value={match.playedAt}
           onChange={(date) => onUpdate({ playedAt: date })}
@@ -517,7 +506,7 @@ function HeroPicker({
         <label className="text-sm font-medium">Heroes Played</label>
         {heroes.length > 0 && (
           <span
-            className={`tabular-nums text-xs ${
+            className={`text-xs tabular-nums ${
               totalPercentage === 100
                 ? "text-muted-foreground"
                 : "text-red-600 dark:text-red-400"

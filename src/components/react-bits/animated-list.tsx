@@ -69,7 +69,7 @@ const Ripple: React.FC<{ x: number; y: number; onComplete: () => void }> = ({
 }) => {
   return (
     <motion.span
-      className="absolute rounded-full bg-white/30 pointer-events-none"
+      className="pointer-events-none absolute rounded-full bg-white/30"
       style={{ left: x, top: y, x: "-50%", y: "-50%" }}
       initial={{ width: 0, height: 0, opacity: 0.5 }}
       animate={{ width: 300, height: 300, opacity: 0 }}
@@ -109,12 +109,12 @@ const AnimatedListItemComponent: React.FC<{
   const swipeIndicatorOpacity = useTransform(
     x,
     [-100, -50, 50, 100],
-    [1, 0, 0, 1],
+    [1, 0, 0, 1]
   );
 
   const handleDragEnd = (
     _: MouseEvent | TouchEvent | PointerEvent,
-    info: PanInfo,
+    info: PanInfo
   ) => {
     if (Math.abs(info.offset.x) > 100 && swipeToDismiss) {
       onDismiss?.(item);
@@ -141,8 +141,8 @@ const AnimatedListItemComponent: React.FC<{
       ref={itemRef}
       className={cn(
         "relative overflow-hidden rounded-2xl",
-        "bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-neutral-800",
-        onItemClick && "cursor-pointer",
+        "border border-gray-200 bg-white dark:border-neutral-800 dark:bg-[#0a0a0a]",
+        onItemClick && "cursor-pointer"
       )}
       drag={swipeToDismiss ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
@@ -161,10 +161,10 @@ const AnimatedListItemComponent: React.FC<{
       {/* Swipe indicator */}
       {swipeToDismiss && (
         <motion.div
-          className="absolute inset-0 flex items-center justify-center pointer-events-none"
+          className="pointer-events-none absolute inset-0 flex items-center justify-center"
           style={{ opacity: swipeIndicatorOpacity }}
         >
-          <span className="text-red-500 font-semibold text-sm">Dismiss</span>
+          <span className="text-sm font-semibold text-red-500">Dismiss</span>
         </motion.div>
       )}
 
@@ -256,7 +256,7 @@ const AnimatedList: React.FC<AnimatedListProps> = ({
       setItems((prev) => prev.filter((i) => i.id !== item.id));
       onDismiss?.(item);
     },
-    [onDismiss],
+    [onDismiss]
   );
 
   const defaultRenderItem = (item: AnimatedListItem) => (
@@ -363,21 +363,21 @@ const AnimatedList: React.FC<AnimatedListProps> = ({
 
   return (
     <div
-      className={cn("w-full relative overflow-hidden", className)}
+      className={cn("relative w-full overflow-hidden", className)}
       style={{ height }}
     >
       {/* Fade edge overlays */}
       {fadeEdges && (
         <>
           <div
-            className="absolute top-0 left-0 right-0 pointer-events-none z-10"
+            className="pointer-events-none absolute top-0 right-0 left-0 z-10"
             style={{
               height: fadeEdgeSize,
               background: `linear-gradient(to bottom, ${fadeColor || "var(--background, #0a0a0a)"} 0%, transparent 100%)`,
             }}
           />
           <div
-            className="absolute bottom-0 left-0 right-0 pointer-events-none z-10"
+            className="pointer-events-none absolute right-0 bottom-0 left-0 z-10"
             style={{
               height: fadeEdgeSize,
               background: `linear-gradient(to top, ${fadeColor || "var(--background, #0a0a0a)"} 0%, transparent 100%)`,
@@ -387,7 +387,7 @@ const AnimatedList: React.FC<AnimatedListProps> = ({
       )}
 
       <div
-        className="h-full overflow-y-auto overflow-x-hidden scrollbar-hide"
+        className="scrollbar-hide h-full overflow-x-hidden overflow-y-auto"
         onMouseEnter={() => pauseOnHover && setIsPaused(true)}
         onMouseLeave={() => pauseOnHover && setIsPaused(false)}
       >

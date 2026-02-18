@@ -26,10 +26,7 @@ export default async function DashboardLayout({
       <header className="border-b">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <BarChart3
-              className="text-primary h-6 w-6"
-              aria-hidden="true"
-            />
+            <BarChart3 className="text-primary h-6 w-6" aria-hidden="true" />
             <span className="text-lg font-bold tracking-tight">
               lux.dev{" "}
               <span className="text-muted-foreground font-normal">/</span>{" "}

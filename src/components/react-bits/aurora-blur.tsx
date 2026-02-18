@@ -210,7 +210,7 @@ const Scene: React.FC<SceneProps> = ({
       u_saturation: { value: 1 },
       u_opacity: { value: 1 },
     }),
-    [],
+    []
   );
 
   useFrame((state) => {
@@ -221,22 +221,22 @@ const Scene: React.FC<SceneProps> = ({
     material.uniforms.u_speed.value = speed;
     const l = layers;
     material.uniforms.u_layer1Color.value.set(
-      ...hexToVec3(l[0]?.color || "#000"),
+      ...hexToVec3(l[0]?.color || "#000")
     );
     material.uniforms.u_layer1Speed.value = l[0]?.speed || 0;
     material.uniforms.u_layer1Intensity.value = l[0]?.intensity || 0;
     material.uniforms.u_layer2Color.value.set(
-      ...hexToVec3(l[1]?.color || "#000"),
+      ...hexToVec3(l[1]?.color || "#000")
     );
     material.uniforms.u_layer2Speed.value = l[1]?.speed || 0;
     material.uniforms.u_layer2Intensity.value = l[1]?.intensity || 0;
     material.uniforms.u_layer3Color.value.set(
-      ...hexToVec3(l[2]?.color || "#000"),
+      ...hexToVec3(l[2]?.color || "#000")
     );
     material.uniforms.u_layer3Speed.value = l[2]?.speed || 0;
     material.uniforms.u_layer3Intensity.value = l[2]?.intensity || 0;
     material.uniforms.u_layer4Color.value.set(
-      ...hexToVec3(l[3]?.color || "#000"),
+      ...hexToVec3(l[3]?.color || "#000")
     );
     material.uniforms.u_layer4Speed.value = l[3]?.speed || 0;
     material.uniforms.u_layer4Intensity.value = l[3]?.intensity || 0;
@@ -246,10 +246,10 @@ const Scene: React.FC<SceneProps> = ({
     material.uniforms.u_verticalFade.value = verticalFade;
     material.uniforms.u_bloomIntensity.value = bloomIntensity;
     material.uniforms.u_skyColor1.value.set(
-      ...hexToVec3(skyLayers[0]?.color || "#000"),
+      ...hexToVec3(skyLayers[0]?.color || "#000")
     );
     material.uniforms.u_skyColor2.value.set(
-      ...hexToVec3(skyLayers[1]?.color || "#000"),
+      ...hexToVec3(skyLayers[1]?.color || "#000")
     );
     material.uniforms.u_skyBlend1.value = skyLayers[1]?.blend || 0;
     material.uniforms.u_skyBlend2.value = skyLayers[0]?.blend || 0;
@@ -300,7 +300,7 @@ const AuroraBlur: React.FC<AuroraBlurProps> = ({
       }}
     >
       <Canvas
-        className="absolute inset-0 w-full h-full"
+        className="absolute inset-0 h-full w-full"
         gl={{ antialias: true, alpha: true }}
         orthographic
         camera={{
