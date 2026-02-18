@@ -1,18 +1,26 @@
 "use client";
 
+import { ActivityHeatmap } from "@/components/dashboard/charts/activity-heatmap";
 import { GameModeDistributionChart } from "@/components/dashboard/charts/game-mode-distribution-chart";
 import { GameModeWinrateChart } from "@/components/dashboard/charts/game-mode-winrate-chart";
 import { HeroWinrateChart } from "@/components/dashboard/charts/hero-winrate-chart";
 import { MapWinLossChart } from "@/components/dashboard/charts/map-win-loss-chart";
 import { MostPlayedHeroesChart } from "@/components/dashboard/charts/most-played-heroes-chart";
+import { RecentFormChart } from "@/components/dashboard/charts/recent-form-chart";
+import { StreakChart } from "@/components/dashboard/charts/streak-chart";
+import { WinrateTrendChart } from "@/components/dashboard/charts/winrate-trend-chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type {
+  ActivityHeatmapResult,
   GameModeDistResult,
   GameModeWinrateResult,
   HeroWinrateResult,
   MapWinLossResult,
   MatchData,
   MostPlayedHeroResult,
+  RecentFormData,
+  RollingWinrateResult,
+  StreakData,
 } from "@/lib/match-stats";
 import {
   Clock,
@@ -30,6 +38,10 @@ type DashboardTabsProps = {
   mostPlayedHeroes: MostPlayedHeroResult;
   heroWinrates: HeroWinrateResult;
   matches: MatchData[];
+  rollingWinrate: RollingWinrateResult;
+  activityHeatmap: ActivityHeatmapResult;
+  streakData: StreakData;
+  recentForm: RecentFormData;
 };
 
 function PlaceholderTab({
@@ -56,6 +68,10 @@ export function DashboardTabs({
   mostPlayedHeroes,
   heroWinrates,
   matches,
+  rollingWinrate,
+  activityHeatmap,
+  streakData,
+  recentForm,
 }: DashboardTabsProps) {
   return (
     <Tabs defaultValue="overview">
@@ -72,7 +88,7 @@ export function DashboardTabs({
           <Map className="size-4" aria-hidden="true" />
           Maps
         </TabsTrigger>
-        <TabsTrigger value="time" disabled>
+        <TabsTrigger value="time">
           <Clock className="size-4" aria-hidden="true" />
           Time
         </TabsTrigger>
@@ -111,11 +127,13 @@ export function DashboardTabs({
         />
       </TabsContent>
 
-      <TabsContent value="time">
-        <PlaceholderTab
-          title="Time-Based Analytics coming soon"
-          description="Winrate trends over time, session analysis, and day-of-week performance patterns."
-        />
+      <TabsContent value="time" className="space-y-4 pt-4">
+        <WinrateTrendChart result={rollingWinrate} />
+        <div className="grid gap-4 md:grid-cols-2">
+          <ActivityHeatmap result={activityHeatmap} />
+          <StreakChart data={streakData} />
+        </div>
+        <RecentFormChart data={recentForm} />
       </TabsContent>
 
       <TabsContent value="groups">
