@@ -671,6 +671,7 @@ export type {
   MostPlayedHeroResult,
   HeroWinrateResult,
   SummaryStats,
+  RollingWinrateEntry,
   RollingWinrateResult,
   ActivityHeatmapResult,
   RecentResult,
