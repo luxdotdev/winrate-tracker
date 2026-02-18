@@ -37,6 +37,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { TimePicker } from "@/components/ui/time-picker";
 import { CalendarIcon, ChevronsUpDown, Plus, Trash2, X } from "lucide-react";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -318,7 +319,7 @@ function MatchEntryCard({
 
       <div className="grid gap-4 sm:grid-cols-2">
         <MapPicker value={match.map} onChange={(map) => onUpdate({ map })} />
-        <DatePicker
+        <DateTimePicker
           value={match.playedAt}
           onChange={(date) => onUpdate({ playedAt: date })}
         />
@@ -338,7 +339,7 @@ function MatchEntryCard({
           >
             <ToggleGroupItem
               value="win"
-              className="flex-1 !rounded-l-md data-[state=on]:bg-green-100 data-[state=on]:text-green-800 dark:data-[state=on]:bg-green-900/30 dark:data-[state=on]:text-green-400"
+              className="flex-1 rounded-l-md! data-[state=on]:bg-green-100 data-[state=on]:text-green-800 dark:data-[state=on]:bg-green-900/30 dark:data-[state=on]:text-green-400"
             >
               Win
             </ToggleGroupItem>
@@ -348,7 +349,7 @@ function MatchEntryCard({
             >
               Loss
             </ToggleGroupItem>
-            <ToggleGroupItem value="draw" className="flex-1 !rounded-r-md">
+            <ToggleGroupItem value="draw" className="flex-1 rounded-r-md!">
               Draw
             </ToggleGroupItem>
           </ToggleGroup>
@@ -451,35 +452,49 @@ function MapPicker({
   );
 }
 
-function DatePicker({
+function DateTimePicker({
   value,
   onChange,
 }: {
   value: Date;
   onChange: (date: Date) => void;
 }) {
+  function handleDaySelect(day: Date | undefined) {
+    if (!day) return;
+    const updated = new Date(day);
+    updated.setHours(value.getHours(), value.getMinutes(), 0, 0);
+    onChange(updated);
+  }
+
+  function handleTimeChange(date: Date | undefined) {
+    if (!date) return;
+    onChange(date);
+  }
+
   return (
     <div className="space-y-1.5">
-      <label className="text-sm font-medium">Date</label>
+      <label className="text-sm font-medium">Date &amp; Time</label>
       <Popover>
         <PopoverTrigger asChild>
           <Button
+            type="button"
             variant="outline"
             className="w-full justify-start text-left font-normal"
           >
-            <CalendarIcon className="mr-2 size-4" />
-            {format(value, "PPP")}
+            <CalendarIcon className="mr-2 size-4" aria-hidden="true" />
+            {format(value, "PPP p")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar
             mode="single"
             selected={value}
-            onSelect={(date) => {
-              if (date) onChange(date);
-            }}
+            onSelect={handleDaySelect}
             disabled={(date) => date > new Date()}
           />
+          <div className="border-border border-t p-3">
+            <TimePicker date={value} setDate={handleTimeChange} />
+          </div>
         </PopoverContent>
       </Popover>
     </div>
