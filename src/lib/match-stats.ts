@@ -551,12 +551,10 @@ function getStreakData(matches: MatchData[]): StreakData {
     (a, b) => new Date(b.playedAt).getTime() - new Date(a.playedAt).getTime()
   );
 
-  const recentResults: RecentResult[] = sorted
-    .slice(0, 20)
-    .map((m) => ({
-      matchId: m.id,
-      result: m.result as "win" | "loss" | "draw",
-    }));
+  const recentResults: RecentResult[] = sorted.slice(0, 20).map((m) => ({
+    matchId: m.id,
+    result: m.result as "win" | "loss" | "draw",
+  }));
 
   let currentStreak = 0;
   let currentStreakType: "win" | "loss" | "none" = "none";
@@ -911,8 +909,8 @@ function getRoleStats(matches: MatchData[]): RoleStatsResult {
 
 // --- One-Trick Detection ---
 
-const ONE_TRICK_THRESHOLD = 40;
-const SPECIALIST_THRESHOLD = 25;
+const ONE_TRICK_THRESHOLD = 65;
+const SPECIALIST_THRESHOLD = 50;
 
 type OneTrickResult = {
   topHero: string;
