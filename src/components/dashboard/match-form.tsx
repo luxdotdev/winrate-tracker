@@ -1,12 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
 import { createMatches } from "@/app/dashboard/actions";
-import { HEROES_BY_ROLE, type HeroRole } from "@/data/heroes";
-import { MAPS, MAP_TYPES, type MapType } from "@/data/maps";
-import { heroImageUrl } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -28,19 +32,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { TimePicker } from "@/components/ui/time-picker";
-import { CalendarIcon, ChevronsUpDown, Plus, Trash2, X } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { HEROES_BY_ROLE, type HeroRole } from "@/data/heroes";
+import { MAPS, MAP_TYPES, type MapType } from "@/data/maps";
+import { heroImageUrl } from "@/lib/utils";
 import { format } from "date-fns";
+import { CalendarIcon, ChevronsUpDown, Plus, Trash2, X } from "lucide-react";
 import Image from "next/image";
+import { useState, useTransition } from "react";
 
 type HeroSelection = {
   hero: string;
@@ -612,7 +612,7 @@ function HeroRow({
             onUpdatePercentage(val);
           }
         }}
-        className="border-input bg-background h-9 w-14 rounded-md border px-2 text-center text-sm tabular-nums"
+        className="border-input bg-background h-9 w-16 rounded-md border px-2 text-center text-sm tabular-nums"
         aria-label={`Percentage for ${selection.hero}`}
       />
 
