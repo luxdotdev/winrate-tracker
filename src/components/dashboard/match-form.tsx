@@ -34,7 +34,8 @@ import {
 } from "@/components/ui/select";
 import { TimePicker } from "@/components/ui/time-picker";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { HEROES_BY_ROLE, getHeroRole, type HeroRole } from "@/data/heroes";
+import { ALL_HEROES, HEROES_BY_ROLE, getHeroRole, type HeroRole } from "@/data/heroes";
+import Fuse from "fuse.js";
 import { MAPS, MAP_TYPES, type MapType } from "@/data/maps";
 import { heroImageUrl } from "@/lib/utils";
 import { format } from "date-fns";
@@ -100,6 +101,20 @@ function distributePercentages(heroes: HeroSelection[]): HeroSelection[] {
     percentage: base + (i < remainder ? 1 : 0),
   }));
 }
+
+function normalizeForSearch(input: string): string {
+  return input
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+type FuseHeroItem = {
+  name: string;
+  role: HeroRole;
+  searchKey: string;
+};
 
 function fuzzyScore(value: string, search: string): number {
   const v = value.toLowerCase();
@@ -663,6 +678,12 @@ function HeroRow({
   );
 }
 
+const FUSE_HERO_ITEMS: FuseHeroItem[] = ALL_HEROES.map(({ name, role }) => ({
+  name,
+  role,
+  searchKey: normalizeForSearch(name),
+}));
+
 function HeroCombobox({
   selectedHeroNames,
   preferredRole,
@@ -673,6 +694,18 @@ function HeroCombobox({
   onSelect: (hero: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const fuse = useMemo(
+    () =>
+      new Fuse(FUSE_HERO_ITEMS, {
+        includeScore: true,
+        ignoreDiacritics: true,
+        threshold: 0.2,
+        keys: ["searchKey"],
+      }),
+    []
+  );
 
   const roleOrder = useMemo(() => {
     const roles = Object.keys(HEROES_BY_ROLE) as HeroRole[];
@@ -680,29 +713,44 @@ function HeroCombobox({
     return [preferredRole, ...roles.filter((r) => r !== preferredRole)];
   }, [preferredRole]);
 
-  const heroRoleLookup = useMemo(() => {
-    const map = new Map<string, HeroRole>();
-    for (const [role, heroes] of Object.entries(HEROES_BY_ROLE)) {
-      for (const name of heroes) {
-        map.set(name.toLowerCase(), role as HeroRole);
-      }
+  const groupedHeroes = useMemo(() => {
+    function available(name: string) {
+      return !selectedHeroNames.has(name);
     }
-    return map;
-  }, []);
 
-  const heroFilter = useMemo(() => {
-    return (value: string, search: string) => {
-      const base = fuzzyScore(value, search);
-      if (base === 0) return 0;
-      if (!preferredRole) return base;
-      const role = heroRoleLookup.get(value.toLowerCase());
-      if (role === preferredRole) return Math.min(1, base + 0.3);
-      return base;
-    };
-  }, [preferredRole, heroRoleLookup]);
+    if (!search) {
+      return roleOrder
+        .map((role) => ({
+          role,
+          heroes: HEROES_BY_ROLE[role].filter(available),
+        }))
+        .filter((g) => g.heroes.length > 0);
+    }
+
+    const results = fuse
+      .search(normalizeForSearch(search))
+      .map((r) => r.item)
+      .filter((item) => available(item.name));
+
+    const grouped = new Map<HeroRole, string[]>();
+    for (const { name, role } of results) {
+      if (!grouped.has(role)) grouped.set(role, []);
+      grouped.get(role)!.push(name);
+    }
+
+    return roleOrder
+      .filter((role) => grouped.has(role))
+      .map((role) => ({ role, heroes: grouped.get(role)! }));
+  }, [search, fuse, selectedHeroNames, roleOrder]);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setSearch("");
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -720,33 +768,36 @@ function HeroCombobox({
         align="start"
         onWheel={handleComboboxWheel}
       >
-        <Command filter={heroFilter}>
-          <CommandInput placeholder="Search heroes..." />
+        <Command shouldFilter={false}>
+          <CommandInput
+            placeholder="Search heroes..."
+            value={search}
+            onValueChange={setSearch}
+          />
           <CommandList>
             <CommandEmpty>No heroes found.</CommandEmpty>
-            {roleOrder.map((role) => (
+            {groupedHeroes.map(({ role, heroes }) => (
               <CommandGroup key={role} heading={role}>
-                {HEROES_BY_ROLE[role]
-                  .filter((name) => !selectedHeroNames.has(name))
-                  .map((name) => (
-                    <CommandItem
-                      key={name}
-                      value={name}
-                      onSelect={() => {
-                        onSelect(name);
-                        setOpen(false);
-                      }}
-                    >
-                      <Image
-                        src={heroImageUrl(name)}
-                        alt={name}
-                        width={20}
-                        height={20}
-                        className="size-5 rounded-sm"
-                      />
-                      {name}
-                    </CommandItem>
-                  ))}
+                {heroes.map((name) => (
+                  <CommandItem
+                    key={name}
+                    value={name}
+                    onSelect={() => {
+                      onSelect(name);
+                      setOpen(false);
+                      setSearch("");
+                    }}
+                  >
+                    <Image
+                      src={heroImageUrl(name)}
+                      alt={name}
+                      width={20}
+                      height={20}
+                      className="size-5 rounded-sm"
+                    />
+                    {name}
+                  </CommandItem>
+                ))}
               </CommandGroup>
             ))}
           </CommandList>
