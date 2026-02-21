@@ -34,13 +34,13 @@ import {
 } from "@/components/ui/select";
 import { TimePicker } from "@/components/ui/time-picker";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { HEROES_BY_ROLE, type HeroRole } from "@/data/heroes";
+import { HEROES_BY_ROLE, getHeroRole, type HeroRole } from "@/data/heroes";
 import { MAPS, MAP_TYPES, type MapType } from "@/data/maps";
 import { heroImageUrl } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, ChevronsUpDown, Plus, Trash2, X } from "lucide-react";
 import Image from "next/image";
-import { useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 
 type HeroSelection = {
   hero: string;
@@ -99,6 +99,26 @@ function distributePercentages(heroes: HeroSelection[]): HeroSelection[] {
     ...h,
     percentage: base + (i < remainder ? 1 : 0),
   }));
+}
+
+function fuzzyScore(value: string, search: string): number {
+  const v = value.toLowerCase();
+  const s = search.toLowerCase();
+
+  if (v === s) return 1;
+  if (v.startsWith(s)) return 0.9;
+  if (v.includes(s)) return 0.75;
+
+  let vi = 0;
+  let gaps = 0;
+  for (const ch of s) {
+    const idx = v.indexOf(ch, vi);
+    if (idx === -1) return 0;
+    if (idx > vi) gaps += idx - vi;
+    vi = idx + 1;
+  }
+
+  return Math.max(0.1, 0.6 * (1 - gaps / v.length));
 }
 
 type MatchFormProps = {
@@ -423,7 +443,7 @@ function MapPicker({
           align="start"
           onWheel={handleComboboxWheel}
         >
-          <Command>
+          <Command filter={fuzzyScore}>
             <CommandInput placeholder="Search maps..." />
             <CommandList>
               <CommandEmpty>No maps found.</CommandEmpty>
@@ -514,6 +534,8 @@ function HeroPicker({
 }) {
   const selectedHeroNames = new Set(heroes.map((h) => h.hero));
   const totalPercentage = heroes.reduce((sum, h) => sum + h.percentage, 0);
+  const preferredRole =
+    heroes.length > 0 ? getHeroRole(heroes[0].hero) : undefined;
 
   return (
     <div className="space-y-3">
@@ -554,6 +576,7 @@ function HeroPicker({
 
       <HeroCombobox
         selectedHeroNames={selectedHeroNames}
+        preferredRole={preferredRole}
         onSelect={onAddHero}
       />
     </div>
@@ -569,9 +592,14 @@ function HeroRow({
   onRemove: () => void;
   onUpdatePercentage: (percentage: number) => void;
 }) {
+  const [rawValue, setRawValue] = useState(String(selection.percentage));
   const activePreset = PERCENTAGE_PRESETS.find(
     (p) => p === selection.percentage
   );
+
+  useEffect(() => {
+    setRawValue(String(selection.percentage));
+  }, [selection.percentage]);
 
   return (
     <div className="bg-muted/50 flex items-center gap-3 rounded-md p-2">
@@ -603,13 +631,20 @@ function HeroRow({
 
       <input
         type="number"
-        min={1}
+        min={0}
         max={100}
-        value={selection.percentage}
+        value={rawValue}
         onChange={(e) => {
+          setRawValue(e.target.value);
           const val = parseInt(e.target.value, 10);
           if (!isNaN(val) && val >= 0 && val <= 100) {
             onUpdatePercentage(val);
+          }
+        }}
+        onBlur={() => {
+          const val = parseInt(rawValue, 10);
+          if (isNaN(val) || val < 0 || val > 100) {
+            setRawValue(String(selection.percentage));
           }
         }}
         className="border-input bg-background h-9 w-16 rounded-md border px-2 text-center text-sm tabular-nums"
@@ -630,12 +665,41 @@ function HeroRow({
 
 function HeroCombobox({
   selectedHeroNames,
+  preferredRole,
   onSelect,
 }: {
   selectedHeroNames: Set<string>;
+  preferredRole: HeroRole | undefined;
   onSelect: (hero: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+
+  const roleOrder = useMemo(() => {
+    const roles = Object.keys(HEROES_BY_ROLE) as HeroRole[];
+    if (!preferredRole) return roles;
+    return [preferredRole, ...roles.filter((r) => r !== preferredRole)];
+  }, [preferredRole]);
+
+  const heroRoleLookup = useMemo(() => {
+    const map = new Map<string, HeroRole>();
+    for (const [role, heroes] of Object.entries(HEROES_BY_ROLE)) {
+      for (const name of heroes) {
+        map.set(name.toLowerCase(), role as HeroRole);
+      }
+    }
+    return map;
+  }, []);
+
+  const heroFilter = useMemo(() => {
+    return (value: string, search: string) => {
+      const base = fuzzyScore(value, search);
+      if (base === 0) return 0;
+      if (!preferredRole) return base;
+      const role = heroRoleLookup.get(value.toLowerCase());
+      if (role === preferredRole) return Math.min(1, base + 0.3);
+      return base;
+    };
+  }, [preferredRole, heroRoleLookup]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -656,11 +720,11 @@ function HeroCombobox({
         align="start"
         onWheel={handleComboboxWheel}
       >
-        <Command>
+        <Command filter={heroFilter}>
           <CommandInput placeholder="Search heroes..." />
           <CommandList>
             <CommandEmpty>No heroes found.</CommandEmpty>
-            {(Object.keys(HEROES_BY_ROLE) as HeroRole[]).map((role) => (
+            {roleOrder.map((role) => (
               <CommandGroup key={role} heading={role}>
                 {HEROES_BY_ROLE[role]
                   .filter((name) => !selectedHeroNames.has(name))
