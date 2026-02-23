@@ -1763,7 +1763,7 @@ function getMapTimelineData(matches: MatchData[]): MapTimelineResult {
 
 // --- Session Analysis ---
 
-const SESSION_GAP_MINUTES = 30;
+const SESSION_GAP_MINUTES = 60;
 
 type SessionEntry = {
   sessionIndex: number;
@@ -1958,9 +1958,9 @@ function getDayOfWeekStats(matches: MatchData[]): DayOfWeekResult {
     ).day;
   }
 
-  const weekdayEntries = data.filter((d) => d.dayIndex >= 1 && d.dayIndex <= 5);
+  const weekdayEntries = data.filter((d) => d.dayIndex >= 1 && d.dayIndex <= 4);
   const weekendEntries = data.filter(
-    (d) => d.dayIndex === 0 || d.dayIndex === 6
+    (d) => d.dayIndex === 0 || d.dayIndex === 5 || d.dayIndex === 6
   );
 
   function weightedWinrate(entries: DayOfWeekEntry[]): number {
