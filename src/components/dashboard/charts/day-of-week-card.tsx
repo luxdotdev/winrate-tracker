@@ -42,14 +42,8 @@ function deltaBadgeClasses(delta: number): string {
 }
 
 export function DayOfWeekCard({ result }: DayOfWeekCardProps) {
-  const {
-    data,
-    bestDay,
-    worstDay,
-    weekdayWinrate,
-    weekendWinrate,
-    insight,
-  } = result;
+  const { data, bestDay, worstDay, weekdayWinrate, weekendWinrate, insight } =
+    result;
 
   const hasData = data.some((d) => d.total > 0);
 
@@ -121,7 +115,7 @@ export function DayOfWeekCard({ result }: DayOfWeekCardProps) {
                     }
                     return (
                       <div className="flex flex-col gap-0.5 text-xs">
-                        <span className="font-mono tabular-nums font-medium">
+                        <span className="font-mono font-medium tabular-nums">
                           {d.winrate}% winrate
                         </span>
                         <span className="text-muted-foreground">
@@ -149,7 +143,7 @@ export function DayOfWeekCard({ result }: DayOfWeekCardProps) {
               {weekdayWinrate}%
             </p>
             <p className="text-muted-foreground text-xs">Weekdays</p>
-            <p className="text-muted-foreground/70 text-xs">Mon – Fri</p>
+            <p className="text-muted-foreground/70 text-xs">Mon – Thu</p>
           </div>
           <div className="text-center">
             <div className="flex items-center justify-center gap-1.5">
@@ -167,14 +161,14 @@ export function DayOfWeekCard({ result }: DayOfWeekCardProps) {
               )}
             </div>
             <p className="text-muted-foreground text-xs">Weekends</p>
-            <p className="text-muted-foreground/70 text-xs">Sat – Sun</p>
+            <p className="text-muted-foreground/70 text-xs">Fri – Sun</p>
           </div>
         </div>
 
         {bestDay && worstDay && bestDay !== worstDay && (
           <div className="grid grid-cols-2 gap-2">
             <div className="rounded-md bg-emerald-500/10 p-2 text-center">
-              <p className="font-semibold text-sm text-emerald-700 dark:text-emerald-400">
+              <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
                 {bestDay}
               </p>
               <p className="text-xs text-emerald-700/80 dark:text-emerald-400/80">
@@ -182,7 +176,7 @@ export function DayOfWeekCard({ result }: DayOfWeekCardProps) {
               </p>
             </div>
             <div className="rounded-md bg-red-500/10 p-2 text-center">
-              <p className="font-semibold text-sm text-red-700 dark:text-red-400">
+              <p className="text-sm font-semibold text-red-700 dark:text-red-400">
                 {worstDay}
               </p>
               <p className="text-xs text-red-700/80 dark:text-red-400/80">
@@ -194,7 +188,7 @@ export function DayOfWeekCard({ result }: DayOfWeekCardProps) {
       </CardContent>
       <CardFooter>
         <p className="text-muted-foreground text-xs">
-          Based on local time when each match was recorded.
+          Matches are attributed to the day the session started.
         </p>
       </CardFooter>
     </Card>
