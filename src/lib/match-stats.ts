@@ -1610,28 +1610,17 @@ type RepeatMapResult = {
 };
 
 function getRepeatMapData(matches: MatchData[]): RepeatMapResult {
-  const sessionMap = new Map<string, MatchData[]>();
-
-  for (const match of matches) {
-    const d = new Date(match.playedAt);
-    const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-    const current = sessionMap.get(key) ?? [];
-    current.push(match);
-    sessionMap.set(key, current);
-  }
+  const sessions = groupMatchesIntoSessions(matches);
 
   let firstWins = 0;
   let firstTotal = 0;
   let repeatWins = 0;
   let repeatTotal = 0;
 
-  for (const [, session] of sessionMap) {
+  for (const session of sessions) {
     const seenMaps = new Set<string>();
-    const sorted = [...session].sort(
-      (a, b) => new Date(a.playedAt).getTime() - new Date(b.playedAt).getTime()
-    );
 
-    for (const match of sorted) {
+    for (const match of session) {
       if (!seenMaps.has(match.map)) {
         seenMaps.add(match.map);
         firstTotal++;
@@ -1761,9 +1750,36 @@ function getMapTimelineData(matches: MatchData[]): MapTimelineResult {
   return { maps };
 }
 
-// --- Session Analysis ---
+// --- Session Grouping ---
 
-const SESSION_GAP_MINUTES = 60;
+const SESSION_GAP_MINUTES = 180;
+
+function groupMatchesIntoSessions(matches: MatchData[]): MatchData[][] {
+  if (matches.length === 0) return [];
+
+  const sorted = [...matches].sort(
+    (a, b) => a.playedAt.getTime() - b.playedAt.getTime()
+  );
+
+  const sessions: MatchData[][] = [];
+  let current: MatchData[] = [sorted[0]];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const gap =
+      (sorted[i].playedAt.getTime() - current.at(-1)!.playedAt.getTime()) /
+      (1000 * 60);
+    if (gap >= SESSION_GAP_MINUTES) {
+      sessions.push(current);
+      current = [sorted[i]];
+    } else {
+      current.push(sorted[i]);
+    }
+  }
+  sessions.push(current);
+  return sessions;
+}
+
+// --- Session Analysis ---
 
 type SessionEntry = {
   sessionIndex: number;
@@ -1796,25 +1812,7 @@ function getSessionAnalysis(matches: MatchData[]): SessionAnalysisResult {
     };
   }
 
-  const sorted = [...matches].sort(
-    (a, b) => a.playedAt.getTime() - b.playedAt.getTime()
-  );
-
-  const rawSessions: MatchData[][] = [];
-  let current: MatchData[] = [sorted[0]];
-
-  for (let i = 1; i < sorted.length; i++) {
-    const prev = current.at(-1)!;
-    const gap =
-      (sorted[i].playedAt.getTime() - prev.playedAt.getTime()) / (1000 * 60);
-    if (gap >= SESSION_GAP_MINUTES) {
-      rawSessions.push(current);
-      current = [sorted[i]];
-    } else {
-      current.push(sorted[i]);
-    }
-  }
-  rawSessions.push(current);
+  const rawSessions = groupMatchesIntoSessions(matches);
 
   const sessions: SessionEntry[] = rawSessions.map((group, i) => {
     const wins = group.filter((m) => m.result === "win").length;
@@ -1923,13 +1921,20 @@ function getDayOfWeekStats(matches: MatchData[]): DayOfWeekResult {
     { wins: number; losses: number; draws: number }
   >();
 
-  for (const match of matches) {
-    const day = match.playedAt.getDay();
-    const current = counts.get(day) ?? { wins: 0, losses: 0, draws: 0 };
-    if (match.result === "win") current.wins++;
-    else if (match.result === "loss") current.losses++;
-    else current.draws++;
-    counts.set(day, current);
+  const sessions = groupMatchesIntoSessions(matches);
+  for (const session of sessions) {
+    const sessionDay = session[0].playedAt.getDay();
+    for (const match of session) {
+      const current = counts.get(sessionDay) ?? {
+        wins: 0,
+        losses: 0,
+        draws: 0,
+      };
+      if (match.result === "win") current.wins++;
+      else if (match.result === "loss") current.losses++;
+      else current.draws++;
+      counts.set(sessionDay, current);
+    }
   }
 
   const data: DayOfWeekEntry[] = DAY_ORDER.map((dayIndex) => {
