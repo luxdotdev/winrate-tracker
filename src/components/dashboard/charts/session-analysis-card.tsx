@@ -60,7 +60,7 @@ export function SessionAnalysisCard({ result }: SessionAnalysisCardProps) {
               Not enough sessions yet
             </p>
             <p className="text-muted-foreground/70 text-xs text-pretty max-w-[220px]">
-              Sessions are groups of games played within 30 minutes of each
+              Sessions are groups of games played within 3 hours of each
               other. Play more matches to see trends.
             </p>
           </div>
@@ -184,7 +184,7 @@ export function SessionAnalysisCard({ result }: SessionAnalysisCardProps) {
       </CardContent>
       <CardFooter>
         <p className="text-muted-foreground text-xs">
-          Sessions are groups of games played within 30 minutes of each other.
+          Sessions are groups of games played within 3 hours of each other.
           Showing the last {recentSessions.length} session
           {recentSessions.length !== 1 ? "s" : ""}.
         </p>
